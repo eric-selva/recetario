@@ -13,18 +13,11 @@ describe('Home Page', () => {
     expect(screen.getByText(/Tu cocina, tus recetas/)).toBeInTheDocument()
   })
 
-  it('renders CTA buttons', () => {
+  it('renders three CTA buttons', () => {
     render(<Home />)
     expect(screen.getByText('Ver recetas')).toBeInTheDocument()
-    expect(screen.getAllByText('Nueva receta').length).toBeGreaterThan(0)
-  })
-
-  it('renders three quick cards', () => {
-    render(<Home />)
-    // Quick cards have these headings
-    expect(screen.getByText('Crear receta')).toBeInTheDocument()
-    const headings = screen.getAllByRole('heading', { level: 3 })
-    expect(headings.length).toBe(3)
+    expect(screen.getByText('Lista de compra')).toBeInTheDocument()
+    expect(screen.getByText('Nueva receta')).toBeInTheDocument()
   })
 
   it('links to correct pages', () => {

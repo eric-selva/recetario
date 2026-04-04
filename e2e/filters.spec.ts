@@ -8,16 +8,16 @@ test.describe('Recipe Filters', () => {
     await page.getByRole('button', { name: 'Desayuno' }).click()
     await page.waitForTimeout(500)
 
-    // The button should be active (has accent bg)
+    // The active button gets text-white class (sliding bg is separate)
     const desayunoBtn = page.getByRole('button', { name: 'Desayuno' })
-    await expect(desayunoBtn).toHaveClass(/bg-primary/)
+    await expect(desayunoBtn).toHaveClass(/text-white/)
 
     // Click Todas to reset
     await page.getByRole('button', { name: 'Todas' }).click()
     await page.waitForTimeout(500)
 
     const todasBtn = page.getByRole('button', { name: 'Todas' })
-    await expect(todasBtn).toHaveClass(/bg-primary/)
+    await expect(todasBtn).toHaveClass(/text-white/)
   })
 
   test('search input accepts text and triggers search', async ({ page }) => {
@@ -41,7 +41,7 @@ test.describe('Recipe Filters', () => {
     for (const filter of ['Desayuno', 'Comida', 'Cena', 'Todas']) {
       await page.getByRole('button', { name: filter }).click()
       await page.waitForTimeout(300)
-      await expect(page.getByRole('button', { name: filter })).toHaveClass(/bg-primary/)
+      await expect(page.getByRole('button', { name: filter })).toHaveClass(/text-white/)
     }
   })
 })

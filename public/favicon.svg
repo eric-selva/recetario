@@ -1,21 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <defs>
-    <linearGradient id="pot" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#c45d35"/>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e87a56"/>
       <stop offset="100%" stop-color="#a34420"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c45d35"/>
+      <stop offset="100%" stop-color="#d4a24e"/>
     </linearGradient>
   </defs>
   <!-- Pot body -->
-  <rect x="6" y="12" width="20" height="14" rx="3" fill="url(#pot)"/>
+  <rect x="6" y="13" width="20" height="13" rx="3" fill="url(#body)"/>
   <!-- Pot rim -->
-  <rect x="4" y="11" width="24" height="3" rx="1.5" fill="#c45d35"/>
+  <rect x="4" y="11" width="24" height="3" rx="1.5" fill="url(#rim)"/>
   <!-- Handles -->
-  <rect x="2" y="14" width="4" height="2" rx="1" fill="#a34420"/>
-  <rect x="26" y="14" width="4" height="2" rx="1" fill="#a34420"/>
-  <!-- Steam lines -->
-  <path d="M11 9 Q11.5 6 11 4" stroke="#5a7247" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
-  <path d="M16 8 Q16.5 5 16 3" stroke="#5a7247" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
-  <path d="M21 9 Q21.5 6 21 4" stroke="#5a7247" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
-  <!-- Lid handle -->
-  <circle cx="16" cy="10" r="1.5" fill="#d4a24e"/>
+  <rect x="1" y="16" width="4" height="2.5" rx="1.2" fill="#d4a24e"/>
+  <rect x="27" y="16" width="4" height="2.5" rx="1.2" fill="#d4a24e"/>
+  <!-- Steam -->
+  <path d="M11 9 Q11.5 6 11 4" stroke="#5a7247" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.65"/>
+  <path d="M16 8 Q16.5 5 16 3" stroke="#5a7247" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <path d="M21 9 Q21.5 6 21 4" stroke="#5a7247" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.65"/>
+  <!-- Lid knob -->
+  <circle cx="16" cy="10" r="1.8" fill="#d4a24e"/>
+  <!-- Highlight -->
+  <rect x="9" y="17" width="6" height="1.5" rx="0.75" fill="#f0a080" opacity="0.4"/>
 </svg>
