@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Recipe } from "@/types/database";
@@ -32,33 +35,217 @@ const mealTypeStyles: Record<
 interface RecipeCardProps {
   recipe: Recipe;
   viewMode?: "grid" | "list";
+  onAddedToList?: () => void;
+}
+
+function AddToListButton({
+  recipeId,
+  onAdded,
+  compact = false,
+}: {
+  recipeId: string;
+  onAdded?: () => void;
+  compact?: boolean;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+
+  async function handleAdd(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (adding || added) return;
+    setAdding(true);
+    const res = await fetch("/api/lista-compra", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ recipe_id: recipeId, servings: 4 }),
+    });
+    setAdding(false);
+    if (res.ok) {
+      setAdded(true);
+      onAdded?.();
+      setTimeout(() => setAdded(false), 2000);
+    }
+  }
+
+  return (
+    <button
+      onClick={handleAdd}
+      disabled={adding}
+      title={added ? "Añadido" : "Añadir a la lista de compra"}
+      className={`inline-flex items-center justify-center rounded-xl transition-all ${
+        added
+          ? "bg-olive/15 text-olive"
+          : "bg-olive/10 text-olive hover:bg-olive/20"
+      } ${compact ? "h-8 w-8" : "gap-1.5 px-3 py-1.5 text-xs font-medium"} disabled:opacity-50`}
+    >
+      {adding ? (
+        <svg
+          className="h-3.5 w-3.5 animate-spin"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth={4}
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+          />
+        </svg>
+      ) : added ? (
+        <svg
+          className="h-3.5 w-3.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4.5 12.75l6 6 9-13.5"
+          />
+        </svg>
+      ) : (
+        <svg
+          className="h-3.5 w-3.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 4.5v15m7.5-7.5h-15"
+          />
+        </svg>
+      )}
+      {!compact && (added ? "Añadido" : "Lista")}
+    </button>
+  );
 }
 
 export default function RecipeCard({
   recipe,
   viewMode = "grid",
+  onAddedToList,
 }: RecipeCardProps) {
   const style = mealTypeStyles[recipe.meal_type] ?? mealTypeStyles.comida;
 
   if (viewMode === "list") {
     return (
-      <Link
-        href={`/recetas/${recipe.id}`}
-        className="group flex overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/20 hover:shadow-md"
-      >
-        <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-primary-light/30 sm:h-32 sm:w-36">
+      <div className="group relative flex overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/20 hover:shadow-md">
+        <Link href={`/recetas/${recipe.id}`} className="flex min-w-0 flex-1">
+          <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-primary-light/30 sm:h-32 sm:w-36">
+            {recipe.image_url ? (
+              <Image
+                src={recipe.image_url}
+                alt={recipe.title}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                sizes="144px"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-primary/20">
+                <svg
+                  className="h-10 w-10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={0.8}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 2C6.48 2 2 6 2 10c0 2.5 1.5 4.5 3 6l1 6h12l1-6c1.5-1.5 3-3.5 3-6 0-4-4.48-8-10-8z" />
+                  <path d="M9 22h6" />
+                </svg>
+              </div>
+            )}
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col justify-center p-4 pr-14">
+            <div className="mb-1.5 flex items-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium ${style.bg} ${style.text}`}
+              >
+                <svg
+                  className="h-3 w-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d={style.icon}
+                  />
+                </svg>
+                {mealTypeLabels[recipe.meal_type]}
+              </span>
+              {recipe.prep_time > 0 && (
+                <span className="flex items-center gap-1 text-xs text-muted">
+                  <svg
+                    className="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {recipe.prep_time} min
+                </span>
+              )}
+            </div>
+            <h3 className="font-heading text-base font-semibold leading-snug group-hover:text-primary sm:text-lg">
+              {recipe.title}
+            </h3>
+            {recipe.description && (
+              <p className="mt-1 line-clamp-1 text-sm leading-relaxed text-muted">
+                {recipe.description}
+              </p>
+            )}
+          </div>
+        </Link>
+        <div className="absolute right-3 top-1/2 z-10 -translate-y-1/2">
+          <AddToListButton
+            recipeId={recipe.id}
+            onAdded={onAddedToList}
+            compact
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/20 hover:shadow-md">
+      <Link href={`/recetas/${recipe.id}`}>
+        <div className="relative aspect-4/3 overflow-hidden bg-primary-light/30">
           {recipe.image_url ? (
             <Image
               src={recipe.image_url}
               alt={recipe.title}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
-              sizes="144px"
+              sizes="(max-width: 640px) 100vw, 50vw"
             />
           ) : (
             <div className="flex h-full items-center justify-center text-primary/20">
               <svg
-                className="h-10 w-10"
+                className="h-16 w-16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -68,12 +255,19 @@ export default function RecipeCard({
               >
                 <path d="M12 2C6.48 2 2 6 2 10c0 2.5 1.5 4.5 3 6l1 6h12l1-6c1.5-1.5 3-3.5 3-6 0-4-4.48-8-10-8z" />
                 <path d="M9 22h6" />
+                <path d="M12 2v4" />
+                <path d="M8 4l1 3" />
+                <path d="M16 4l-1 3" />
               </svg>
             </div>
           )}
+          {/* Gradient overlay */}
+          {recipe.image_url && (
+            <div className="absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-black/20 to-transparent" />
+          )}
         </div>
-        <div className="flex min-w-0 flex-1 flex-col justify-center p-4">
-          <div className="mb-1.5 flex items-center gap-2">
+        <div className="p-4 pb-12">
+          <div className="mb-2.5 flex items-center gap-2">
             <span
               className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium ${style.bg} ${style.text}`}
             >
@@ -111,105 +305,19 @@ export default function RecipeCard({
               </span>
             )}
           </div>
-          <h3 className="font-heading text-base font-semibold leading-snug group-hover:text-primary sm:text-lg">
+          <h3 className="font-heading text-lg font-semibold leading-snug group-hover:text-primary">
             {recipe.title}
           </h3>
           {recipe.description && (
-            <p className="mt-1 line-clamp-1 text-sm leading-relaxed text-muted">
+            <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted">
               {recipe.description}
             </p>
           )}
         </div>
       </Link>
-    );
-  }
-
-  return (
-    <Link
-      href={`/recetas/${recipe.id}`}
-      className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/20 hover:shadow-md"
-    >
-      <div className="relative aspect-4/3 overflow-hidden bg-primary-light/30">
-        {recipe.image_url ? (
-          <Image
-            src={recipe.image_url}
-            alt={recipe.title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, 50vw"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-primary/20">
-            <svg
-              className="h-16 w-16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={0.8}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 2C6.48 2 2 6 2 10c0 2.5 1.5 4.5 3 6l1 6h12l1-6c1.5-1.5 3-3.5 3-6 0-4-4.48-8-10-8z" />
-              <path d="M9 22h6" />
-              <path d="M12 2v4" />
-              <path d="M8 4l1 3" />
-              <path d="M16 4l-1 3" />
-            </svg>
-          </div>
-        )}
-        {/* Gradient overlay */}
-        {recipe.image_url && (
-          <div className="absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-black/20 to-transparent" />
-        )}
+      <div className="absolute bottom-3 right-3 z-10">
+        <AddToListButton recipeId={recipe.id} onAdded={onAddedToList} />
       </div>
-      <div className="p-4">
-        <div className="mb-2.5 flex items-center gap-2">
-          <span
-            className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium ${style.bg} ${style.text}`}
-          >
-            <svg
-              className="h-3 w-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d={style.icon}
-              />
-            </svg>
-            {mealTypeLabels[recipe.meal_type]}
-          </span>
-          {recipe.prep_time > 0 && (
-            <span className="flex items-center gap-1 text-xs text-muted">
-              <svg
-                className="h-3 w-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              {recipe.prep_time} min
-            </span>
-          )}
-        </div>
-        <h3 className="font-heading text-lg font-semibold leading-snug group-hover:text-primary">
-          {recipe.title}
-        </h3>
-        {recipe.description && (
-          <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted">
-            {recipe.description}
-          </p>
-        )}
-      </div>
-    </Link>
+    </div>
   );
 }
