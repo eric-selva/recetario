@@ -53,20 +53,35 @@ export default function Home() {
         <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
           <Link
             href="/recetas"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-7 py-3.5 text-sm font-semibold text-white shadow-md shadow-primary/25 transition-all hover:bg-primary-dark hover:shadow-lg hover:shadow-primary/30"
+            className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-primary px-7 py-3.5 text-sm font-semibold text-white shadow-md shadow-primary/25 transition-all hover:bg-primary-dark hover:shadow-lg hover:shadow-primary/30"
           >
+            <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 016.5 2H20v20H6.5a2.5 2.5 0 010-5H20" />
+              <path d="M8 7h6" />
+              <path d="M8 11h4" />
+            </svg>
             Ver recetas
           </Link>
           <Link
             href="/lista-compra"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-olive/20 bg-card px-7 py-3.5 text-sm font-semibold text-olive transition-all hover:border-olive/40 hover:bg-olive-light"
+            className="inline-flex items-center justify-center gap-2.5 rounded-2xl border-2 border-olive/20 bg-card px-7 py-3.5 text-sm font-semibold text-olive transition-all hover:border-olive/40 hover:bg-olive-light"
           >
+            <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3.5 3.5h2l.6 3M7 13h10l4-8H6.1" />
+              <circle cx="8" cy="20" r="1.5" />
+              <circle cx="17" cy="20" r="1.5" />
+              <path d="M7 13l-1.4-7" />
+            </svg>
             Lista de compra
           </Link>
           <Link
             href="/recetas/nueva"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-saffron/25 bg-card px-7 py-3.5 text-sm font-semibold text-saffron transition-all hover:border-saffron/45 hover:bg-saffron-light"
+            className="inline-flex items-center justify-center gap-2.5 rounded-2xl border-2 border-saffron/25 bg-card px-7 py-3.5 text-sm font-semibold text-saffron transition-all hover:border-saffron/45 hover:bg-saffron-light"
           >
+            <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+            </svg>
             Nueva receta
           </Link>
         </div>
