@@ -148,20 +148,24 @@ export default function RecetaDetailPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
           </svg>
           <span className="text-sm font-medium text-muted">Raciones:</span>
-          <div className="flex items-center gap-1">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-              <button
-                key={n}
-                onClick={() => setServings(n)}
-                className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-semibold transition-all ${
-                  servings === n
-                    ? 'bg-primary text-white shadow-md shadow-primary/20'
-                    : 'bg-card border border-border hover:border-primary/30 hover:bg-primary-light/30'
-                }`}
-              >
-                {n}
-              </button>
-            ))}
+          <div className="flex items-center">
+            <button
+              onClick={() => setServings(Math.max(1, servings - 1))}
+              disabled={servings <= 1}
+              className="flex h-9 w-9 items-center justify-center rounded-l-xl border border-border bg-card text-lg font-semibold transition-all hover:bg-primary-light/30 disabled:opacity-30"
+            >
+              −
+            </button>
+            <span className="flex h-9 w-10 items-center justify-center border-y border-border bg-primary text-sm font-bold text-white">
+              {servings}
+            </span>
+            <button
+              onClick={() => setServings(Math.min(8, servings + 1))}
+              disabled={servings >= 8}
+              className="flex h-9 w-9 items-center justify-center rounded-r-xl border border-border bg-card text-lg font-semibold transition-all hover:bg-primary-light/30 disabled:opacity-30"
+            >
+              +
+            </button>
           </div>
         </div>
         <h1 className="mt-4 font-heading text-3xl font-bold sm:text-4xl">{recipe.title}</h1>
