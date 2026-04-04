@@ -22,8 +22,8 @@ export default function EditarRecetaPage() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 rounded bg-stone-100" />
-          <div className="h-64 rounded-2xl bg-stone-100" />
+          <div className="h-8 w-48 rounded-lg bg-primary-light/40" />
+          <div className="h-64 rounded-2xl bg-primary-light/20" />
         </div>
       </div>
     )
@@ -32,8 +32,11 @@ export default function EditarRecetaPage() {
   if (!recipe) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-20 text-center">
-        <p className="text-lg font-medium">Receta no encontrada</p>
-        <Link href="/recetas" className="mt-4 inline-block text-accent hover:underline">
+        <p className="font-heading text-xl font-semibold">Receta no encontrada</p>
+        <Link href="/recetas" className="mt-4 inline-flex items-center gap-1 text-primary hover:text-primary-dark">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
           Volver a recetas
         </Link>
       </div>
@@ -42,9 +45,10 @@ export default function EditarRecetaPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-3xl font-bold">Editar receta</h1>
+      <h1 className="font-heading text-3xl font-bold">Editar receta</h1>
       <p className="mt-2 text-muted">Modifica los datos de la receta.</p>
-      <div className="mt-8">
+      <div className="divider-herbs my-6" />
+      <div className="mt-2">
         <RecipeForm
           recipeId={id}
           initialData={{

@@ -1,28 +1,88 @@
 @import "tailwindcss";
 
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
 :root {
-  --background: #fafaf9;
-  --foreground: #1c1917;
-  --accent: #ea580c;
-  --accent-light: #fed7aa;
-  --muted: #78716c;
-  --border: #e7e5e4;
-  --card: #ffffff;
+  --background: #fdf6ef;
+  --foreground: #2c1810;
+  --primary: #c45d35;
+  --primary-light: #f4ddd3;
+  --primary-dark: #a34420;
+  --olive: #5a7247;
+  --olive-light: #dce6d5;
+  --saffron: #d4a24e;
+  --saffron-light: #f5ecd6;
+  --muted: #8b7e74;
+  --border: #e8ddd3;
+  --card: #fffaf5;
+  --card-hover: #fff5ec;
+  --shadow: rgba(44, 24, 16, 0.06);
+  --shadow-lg: rgba(44, 24, 16, 0.12);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-accent: var(--accent);
-  --color-accent-light: var(--accent-light);
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+  --color-olive: var(--olive);
+  --color-olive-light: var(--olive-light);
+  --color-saffron: var(--saffron);
+  --color-saffron-light: var(--saffron-light);
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-card: var(--card);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card-hover: var(--card-hover);
+  --color-accent: var(--primary);
+  --color-accent-light: var(--primary-light);
+  --font-heading: 'Playfair Display', Georgia, serif;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* Subtle texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c45d35' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* Selection */
+::selection {
+  background: var(--primary-light);
+  color: var(--foreground);
+}
+
+/* Heading font */
+h1, h2, h3 {
+  font-family: var(--font-heading);
+}
+
+/* Smooth transitions */
+a, button {
+  transition: all 0.2s ease;
+}
+
+/* Decorative divider */
+.divider-herbs {
+  background-image: url("data:image/svg+xml,%3Csvg width='200' height='20' viewBox='0 0 200 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M100 10 C90 4, 80 4, 70 10 C60 16, 50 16, 40 10' stroke='%235a7247' stroke-width='1.5' fill='none' opacity='0.3'/%3E%3Cpath d='M100 10 C110 4, 120 4, 130 10 C140 16, 150 16, 160 10' stroke='%235a7247' stroke-width='1.5' fill='none' opacity='0.3'/%3E%3Ccircle cx='100' cy='10' r='2.5' fill='%23c45d35' opacity='0.4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 200px 20px;
+  height: 20px;
 }

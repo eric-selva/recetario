@@ -10,7 +10,7 @@ describe('Header', () => {
 
   it('renders the logo', () => {
     render(<Header />)
-    expect(screen.getByText('Mi Recetario')).toBeInTheDocument()
+    expect(screen.getByText('Recetario')).toBeInTheDocument()
   })
 
   it('renders all navigation links', () => {

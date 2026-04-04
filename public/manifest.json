@@ -1,11 +1,11 @@
 {
-  "name": "Mi Recetario",
+  "name": "Recetario",
   "short_name": "Recetario",
-  "description": "Recetario personal con lista de la compra semanal",
+  "description": "Tu recetario personal con lista de la compra semanal",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fafaf9",
-  "theme_color": "#ea580c",
+  "background_color": "#fdf6ef",
+  "theme_color": "#c45d35",
   "icons": [
     {
       "src": "/favicon.svg",

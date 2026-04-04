@@ -22,9 +22,9 @@ export default function Toast({ message, type = 'success', onClose }: ToastProps
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-medium text-white shadow-lg transition-all duration-300 ${
+      className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-2xl px-5 py-3.5 text-sm font-medium text-white shadow-lg transition-all duration-300 ${
         visible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-      } ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}
+      } ${type === 'success' ? 'bg-olive shadow-olive/20' : 'bg-red-600 shadow-red-600/20'}`}
     >
       {type === 'success' ? (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

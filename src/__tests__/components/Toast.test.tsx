@@ -11,7 +11,7 @@ describe('Toast', () => {
   it('renders success style by default', () => {
     render(<Toast message="OK" onClose={vi.fn()} />)
     const toast = screen.getByText('OK').closest('div')
-    expect(toast?.className).toContain('bg-green-600')
+    expect(toast?.className).toContain('bg-olive')
   })
 
   it('renders error style when type is error', () => {

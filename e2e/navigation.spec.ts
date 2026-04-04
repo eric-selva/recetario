@@ -3,8 +3,8 @@ import { test, expect } from '@playwright/test'
 test.describe('Navigation', () => {
   test('home page loads with hero', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByText('Mi Recetario').first()).toBeVisible()
-    await expect(page.getByText('Todas tus recetas en un solo lugar')).toBeVisible()
+    await expect(page.getByText('Recetario').first()).toBeVisible()
+    await expect(page.getByText('Tu cocina, tus recetas')).toBeVisible()
   })
 
   test('home page has working CTA links', async ({ page }) => {

@@ -10,19 +10,19 @@ describe('Home Page', () => {
 
   it('renders hero description', () => {
     render(<Home />)
-    expect(screen.getByText(/Todas tus recetas en un solo lugar/)).toBeInTheDocument()
+    expect(screen.getByText(/Tu cocina, tus recetas/)).toBeInTheDocument()
   })
 
   it('renders CTA buttons', () => {
     render(<Home />)
     expect(screen.getByText('Ver recetas')).toBeInTheDocument()
-    expect(screen.getAllByText('Lista de compra').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Nueva receta').length).toBeGreaterThan(0)
   })
 
   it('renders three quick cards', () => {
     render(<Home />)
     // Quick cards have these headings
-    expect(screen.getByText('Nueva receta')).toBeInTheDocument()
+    expect(screen.getByText('Crear receta')).toBeInTheDocument()
     const headings = screen.getAllByRole('heading', { level: 3 })
     expect(headings.length).toBe(3)
   })

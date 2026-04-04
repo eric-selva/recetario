@@ -1,1 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🍳</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="pot" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c45d35"/>
+      <stop offset="100%" stop-color="#a34420"/>
+    </linearGradient>
+  </defs>
+  <!-- Pot body -->
+  <rect x="6" y="12" width="20" height="14" rx="3" fill="url(#pot)"/>
+  <!-- Pot rim -->
+  <rect x="4" y="11" width="24" height="3" rx="1.5" fill="#c45d35"/>
+  <!-- Handles -->
+  <rect x="2" y="14" width="4" height="2" rx="1" fill="#a34420"/>
+  <rect x="26" y="14" width="4" height="2" rx="1" fill="#a34420"/>
+  <!-- Steam lines -->
+  <path d="M11 9 Q11.5 6 11 4" stroke="#5a7247" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+  <path d="M16 8 Q16.5 5 16 3" stroke="#5a7247" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+  <path d="M21 9 Q21.5 6 21 4" stroke="#5a7247" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+  <!-- Lid handle -->
+  <circle cx="16" cy="10" r="1.5" fill="#d4a24e"/>
+</svg>

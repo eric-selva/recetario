@@ -1,24 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/Header";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
   title: {
-    default: "Mi Recetario",
-    template: "%s | Mi Recetario",
+    default: "Recetario",
+    template: "%s | Recetario",
   },
-  description: "Recetario personal con lista de la compra semanal",
+  description: "Tu recetario personal con lista de la compra semanal",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.svg",
@@ -26,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ea580c",
+  themeColor: "#c45d35",
   width: "device-width",
   initialScale: 1,
 };
@@ -37,13 +26,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col font-sans">
+    <html lang="es" className="h-full antialiased">
+      <body className="min-h-full flex flex-col">
         <Header />
         <main className="flex-1">{children}</main>
+        <footer className="border-t border-border bg-card/50 py-6 text-center text-xs text-muted">
+          <div className="divider-herbs mb-4" />
+          Recetario &mdash; Cocina con amor
+        </footer>
       </body>
     </html>
   );
