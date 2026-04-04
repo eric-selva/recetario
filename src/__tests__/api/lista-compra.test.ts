@@ -88,7 +88,7 @@ describe('API /api/lista-compra', () => {
     it('clears entire list when no id', async () => {
       mockFrom.mockReturnValue({
         delete: vi.fn().mockReturnValue({
-          neq: vi.fn().mockResolvedValue({ error: null }),
+          gte: vi.fn().mockResolvedValue({ error: null }),
         }),
       })
 

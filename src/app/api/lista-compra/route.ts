@@ -67,7 +67,7 @@ export async function DELETE(request: NextRequest) {
     const { error } = await supabase.from('shopping_list').delete().eq('id', itemId)
     if (error) return Response.json({ error: error.message }, { status: 500 })
   } else {
-    const { error } = await supabase.from('shopping_list').delete().neq('id', '')
+    const { error } = await supabase.from('shopping_list').delete().gte('added_at', '1970-01-01')
     if (error) return Response.json({ error: error.message }, { status: 500 })
   }
 
