@@ -68,7 +68,7 @@ export default function RecetaDetailPage() {
       name="recipe-detail"
       loading={loading}
       className="mx-auto max-w-3xl px-4 py-8"
-      fixture={
+      fallback={
         <div className="space-y-6">
           <div className="h-6 w-32 rounded bg-stone-200" />
           <div className="aspect-video rounded-2xl bg-stone-200" />

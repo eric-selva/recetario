@@ -12,6 +12,8 @@ const mockShoppingList = [
     ingredients: [
       { id: 'i1', name: 'Espaguetis', quantity: 150, unit: 'g' },
       { id: 'i2', name: 'Tomate', quantity: 200, unit: 'g' },
+      { id: 'i5', name: 'Sal', quantity: 1, unit: 'pizca' },
+      { id: 'i6', name: 'Aceite de oliva', quantity: 2, unit: 'cucharada' },
     ],
   },
   {
@@ -22,6 +24,8 @@ const mockShoppingList = [
     ingredients: [
       { id: 'i3', name: 'Tomate', quantity: 300, unit: 'g' },
       { id: 'i4', name: 'Lechuga', quantity: 1, unit: 'unidad' },
+      { id: 'i7', name: 'Agua', quantity: 500, unit: 'ml' },
+      { id: 'i8', name: 'Pimienta', quantity: 1, unit: 'al gusto' },
     ],
   },
 ]
@@ -59,6 +63,32 @@ describe('Lista de Compra Page', () => {
     })
   })
 
+  it('excludes pantry items (sal, aceite de oliva, agua)', async () => {
+    render(<ListaCompraPage />)
+    await waitFor(() => {
+      expect(screen.getByText('Espaguetis')).toBeInTheDocument()
+    })
+    // Pantry items should not appear
+    expect(screen.queryByText('Aceite de oliva')).not.toBeInTheDocument()
+    expect(screen.queryByText('Agua')).not.toBeInTheDocument()
+  })
+
+  it('excludes "al gusto" and "pizca" unit items', async () => {
+    render(<ListaCompraPage />)
+    await waitFor(() => {
+      expect(screen.getByText('Espaguetis')).toBeInTheDocument()
+    })
+    // "Pimienta" (al gusto) and "Sal" (pizca) should not appear
+    expect(screen.queryByText('Pimienta')).not.toBeInTheDocument()
+  })
+
+  it('shows pantry exclusion info text', async () => {
+    render(<ListaCompraPage />)
+    await waitFor(() => {
+      expect(screen.getByText(/Sal, aceite, agua y especias se excluyen/)).toBeInTheDocument()
+    })
+  })
+
   it('toggles checkbox on click', async () => {
     render(<ListaCompraPage />)
     await waitFor(() => {
@@ -68,10 +98,43 @@ describe('Lista de Compra Page', () => {
     const espaguetisRow = screen.getByText('Espaguetis').closest('button')!
     fireEvent.click(espaguetisRow)
 
-    // Should now be checked - parent span should have line-through
     await waitFor(() => {
       const label = screen.getByText('Espaguetis').closest('span[class*="flex-1"]')
       expect(label?.className).toContain('line-through')
+    })
+  })
+
+  it('shows "Quitar seleccionados" button when items are checked', async () => {
+    render(<ListaCompraPage />)
+    await waitFor(() => {
+      expect(screen.getByText('Espaguetis')).toBeInTheDocument()
+    })
+
+    // Initially no "Quitar seleccionados" button
+    expect(screen.queryByText(/Quitar seleccionados/)).not.toBeInTheDocument()
+
+    // Check an item
+    const espaguetisRow = screen.getByText('Espaguetis').closest('button')!
+    fireEvent.click(espaguetisRow)
+
+    await waitFor(() => {
+      expect(screen.getByText(/Quitar seleccionados/)).toBeInTheDocument()
+    })
+  })
+
+  it('removes individual ingredient on X click', async () => {
+    render(<ListaCompraPage />)
+    await waitFor(() => {
+      expect(screen.getByText('Espaguetis')).toBeInTheDocument()
+    })
+
+    const removeButtons = screen.getAllByTitle('Quitar ingrediente')
+    fireEvent.click(removeButtons[0])
+
+    await waitFor(() => {
+      // One ingredient should be removed from the list
+      const ingredients = screen.getAllByTitle('Quitar ingrediente')
+      expect(ingredients.length).toBeLessThan(removeButtons.length)
     })
   })
 
@@ -85,6 +148,7 @@ describe('Lista de Compra Page', () => {
   it('shows counter text', async () => {
     render(<ListaCompraPage />)
     await waitFor(() => {
+      // 3 items: Espaguetis, Tomate, Lechuga (pantry items excluded)
       expect(screen.getByText(/0 de 3 ingredientes/)).toBeInTheDocument()
     })
   })
@@ -120,7 +184,6 @@ describe('Lista de Compra Page', () => {
       expect(screen.getByText('Espaguetis Boloñesa')).toBeInTheDocument()
     })
 
-    // Click the X button next to a recipe
     const removeButtons = screen.getAllByTitle('Quitar de la lista')
     fireEvent.click(removeButtons[0])
 

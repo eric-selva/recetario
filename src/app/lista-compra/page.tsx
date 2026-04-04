@@ -4,6 +4,15 @@ import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Skeleton } from 'boneyard-js/react'
 
+// Ingredientes de despensa que siempre tienes en casa
+const PANTRY_ITEMS = [
+  'agua', 'sal', 'aceite', 'aceite de oliva', 'aceite de girasol',
+  'pimienta', 'pimienta negra', 'pimienta negra molida',
+  'oregano', 'comino', 'pimenton', 'canela', 'nuez moscada',
+  'laurel', 'tomillo', 'romero', 'perejil seco', 'albahaca seca',
+  'curry', 'cayena', 'cúrcuma',
+]
+
 interface ShoppingItem {
   id: string
   recipe_id: string
@@ -21,16 +30,11 @@ interface ShoppingItem {
   }[]
 }
 
-interface MergedIngredient {
-  name: string
-  entries: { quantity: number; unit: string }[]
-  checked: boolean
-}
-
 export default function ListaCompraPage() {
   const [items, setItems] = useState<ShoppingItem[]>([])
   const [loading, setLoading] = useState(true)
   const [checked, setChecked] = useState<Set<string>>(new Set())
+  const [removed, setRemoved] = useState<Set<string>>(new Set())
 
   function fetchList() {
     setLoading(true)
@@ -42,29 +46,33 @@ export default function ListaCompraPage() {
 
   useEffect(() => { fetchList() }, [])
 
-  // Merge duplicate ingredients across recipes, grouping by normalized name + unit
+  // Merge duplicate ingredients, excluding pantry items and manually removed
   const mergedIngredients = useMemo(() => {
-    const map = new Map<string, MergedIngredient>()
+    const map = new Map<string, { name: string; quantity: number; unit: string }>()
 
     for (const item of items) {
       for (const ing of item.ingredients) {
-        const key = `${ing.name.toLowerCase().trim()}__${ing.unit}`
-        const existing = map.get(key)
+        const normalized = ing.name.toLowerCase().trim()
 
+        // Skip pantry items
+        if (PANTRY_ITEMS.includes(normalized)) continue
+        // Skip "al gusto" items (typically seasonings)
+        if (ing.unit === 'al gusto' || ing.unit === 'pizca') continue
+
+        const key = `${normalized}__${ing.unit}`
+        if (removed.has(key)) continue
+
+        const existing = map.get(key)
         if (existing) {
-          existing.entries[0].quantity += ing.quantity
+          existing.quantity += ing.quantity
         } else {
-          map.set(key, {
-            name: ing.name,
-            entries: [{ quantity: ing.quantity, unit: ing.unit }],
-            checked: checked.has(key),
-          })
+          map.set(key, { name: ing.name, quantity: ing.quantity, unit: ing.unit })
         }
       }
     }
 
     return Array.from(map.entries()).map(([key, value]) => ({ key, ...value }))
-  }, [items, checked])
+  }, [items, removed])
 
   function toggleCheck(key: string) {
     setChecked((prev) => {
@@ -73,6 +81,24 @@ export default function ListaCompraPage() {
       else next.add(key)
       return next
     })
+  }
+
+  function removeIngredient(key: string) {
+    setRemoved((prev) => new Set(prev).add(key))
+    setChecked((prev) => {
+      const next = new Set(prev)
+      next.delete(key)
+      return next
+    })
+  }
+
+  function removeChecked() {
+    setRemoved((prev) => {
+      const next = new Set(prev)
+      for (const key of checked) next.add(key)
+      return next
+    })
+    setChecked(new Set())
   }
 
   async function removeRecipe(itemId: string) {
@@ -85,6 +111,7 @@ export default function ListaCompraPage() {
     await fetch('/api/lista-compra', { method: 'DELETE' })
     setItems([])
     setChecked(new Set())
+    setRemoved(new Set())
   }
 
   const checkedCount = mergedIngredients.filter((i) => checked.has(i.key)).length
@@ -98,7 +125,7 @@ export default function ListaCompraPage() {
           name="shopping-list"
           loading={true}
           className="mt-8"
-          fixture={
+          fallback={
             <div className="space-y-3">
               <div className="flex gap-2">
                 <div className="h-10 w-32 rounded-full bg-stone-200" />
@@ -151,15 +178,28 @@ export default function ListaCompraPage() {
             {checkedCount} de {totalCount} ingredientes
           </p>
         </div>
-        <button
-          onClick={clearAll}
-          className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-          Vaciar lista
-        </button>
+        <div className="flex gap-2">
+          {checkedCount > 0 && (
+            <button
+              onClick={removeChecked}
+              className="inline-flex items-center gap-2 rounded-xl border border-green-200 px-4 py-2 text-sm font-semibold text-green-700 transition-colors hover:bg-green-50"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Quitar seleccionados ({checkedCount})
+            </button>
+          )}
+          <button
+            onClick={clearAll}
+            className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Vaciar lista
+          </button>
+        </div>
       </div>
 
       {/* Recipes in list */}
@@ -194,12 +234,15 @@ export default function ListaCompraPage() {
       {/* Merged ingredient list */}
       <section className="mt-8">
         <h2 className="text-lg font-semibold">Ingredientes</h2>
+        <p className="mt-1 text-xs text-muted">
+          Sal, aceite, agua y especias se excluyen automaticamente.
+        </p>
         <ul className="mt-3 space-y-2">
           {mergedIngredients.map((ing) => (
-            <li key={ing.key}>
+            <li key={ing.key} className="flex items-center gap-2">
               <button
                 onClick={() => toggleCheck(ing.key)}
-                className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
+                className={`flex flex-1 items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
                   checked.has(ing.key)
                     ? 'border-green-200 bg-green-50/50'
                     : 'border-border bg-card hover:border-accent/30'
@@ -227,8 +270,19 @@ export default function ListaCompraPage() {
 
                 {/* Quantity */}
                 <span className={`text-sm font-medium ${checked.has(ing.key) ? 'text-muted' : 'text-accent'}`}>
-                  {ing.entries[0].quantity > 0 && `${formatQuantity(ing.entries[0].quantity)} ${ing.entries[0].unit}`}
+                  {ing.quantity > 0 && `${formatQuantity(ing.quantity)} ${ing.unit}`}
                 </span>
+              </button>
+
+              {/* Remove single ingredient */}
+              <button
+                onClick={() => removeIngredient(ing.key)}
+                className="rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600"
+                title="Quitar ingrediente"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </li>
           ))}
