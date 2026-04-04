@@ -21,7 +21,7 @@ export async function GET() {
 
   const [recipesRes, ingredientsRes] = await Promise.all([
     supabase.from('recipes').select('*').in('id', recipeIds),
-    supabase.from('ingredients').select('*').in('recipe_id', recipeIds).order('order'),
+    supabase.from('ingredients').select('*').in('recipe_id', recipeIds).neq('shoppable', false).order('order'),
   ])
 
   const recipesMap = new Map((recipesRes.data || []).map((r) => [r.id, r]))

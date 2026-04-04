@@ -72,12 +72,13 @@ export async function POST(request: NextRequest) {
 
   // Insert ingredients
   if (ingredients?.length) {
-    const ingredientRows = ingredients.map((ing: { name: string; quantity: number; unit: string }, i: number) => ({
+    const ingredientRows = ingredients.map((ing: { name: string; quantity: number; unit: string; shoppable?: boolean }, i: number) => ({
       recipe_id: recipe.id,
       name: ing.name,
       quantity: ing.quantity,
       unit: ing.unit,
       order: i,
+      ...(ing.shoppable !== undefined && { shoppable: ing.shoppable }),
     }))
 
     const { error: ingError } = await supabase.from('ingredients').insert(ingredientRows)

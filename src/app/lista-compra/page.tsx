@@ -4,13 +4,6 @@ import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Skeleton } from 'boneyard-js/react'
 
-const PANTRY_ITEMS = [
-  'agua', 'sal', 'aceite', 'aceite de oliva', 'aceite de girasol',
-  'pimienta', 'pimienta negra', 'pimienta negra molida',
-  'oregano', 'comino', 'pimenton', 'canela', 'nuez moscada',
-  'laurel', 'tomillo', 'romero', 'perejil seco', 'albahaca seca',
-  'curry', 'cayena', 'cúrcuma',
-]
 
 interface ShoppingItem {
   id: string
@@ -51,9 +44,6 @@ export default function ListaCompraPage() {
     for (const item of items) {
       for (const ing of item.ingredients) {
         const normalized = ing.name.toLowerCase().trim()
-        if (PANTRY_ITEMS.includes(normalized)) continue
-        if (ing.unit === 'al gusto' || ing.unit === 'pizca') continue
-
         const key = `${normalized}__${ing.unit}`
         if (removed.has(key)) continue
 
@@ -248,7 +238,7 @@ export default function ListaCompraPage() {
           <h2 className="font-heading text-lg font-semibold">Ingredientes</h2>
         </div>
         <p className="mt-2 text-xs text-muted">
-          Sal, aceite, agua y especias se excluyen automaticamente.
+          Especias, salsas, aceite, agua y basicos de despensa se excluyen automaticamente.
         </p>
         <ul className="mt-4 space-y-2">
           {mergedIngredients.map((ing) => (

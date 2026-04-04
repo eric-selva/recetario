@@ -26,7 +26,8 @@ CREATE TABLE ingredients (
   name TEXT NOT NULL,
   quantity DECIMAL NOT NULL DEFAULT 0,
   unit TEXT NOT NULL DEFAULT 'g',
-  "order" INT NOT NULL DEFAULT 0
+  "order" INT NOT NULL DEFAULT 0,
+  shoppable BOOLEAN NOT NULL DEFAULT true
 );
 
 -- Tabla de pasos

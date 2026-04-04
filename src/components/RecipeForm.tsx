@@ -9,6 +9,7 @@ interface IngredientInput {
   name: string
   quantity: number
   unit: IngredientUnit
+  shoppable: boolean
 }
 
 interface StepInput {
@@ -52,7 +53,7 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
   const [prepTime, setPrepTime] = useState(initialData?.prep_time ?? 0)
   const [servings, setServings] = useState(initialData?.servings ?? 2)
   const [ingredients, setIngredients] = useState<IngredientInput[]>(
-    initialData?.ingredients ?? [{ name: '', quantity: 0, unit: 'g' }]
+    initialData?.ingredients ?? [{ name: '', quantity: 0, unit: 'g', shoppable: true }]
   )
   const [steps, setSteps] = useState<StepInput[]>(
     initialData?.steps ?? [{ instruction: '' }]
@@ -73,14 +74,14 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
   }
 
   function addIngredient() {
-    setIngredients([...ingredients, { name: '', quantity: 0, unit: 'g' }])
+    setIngredients([...ingredients, { name: '', quantity: 0, unit: 'g', shoppable: true }])
   }
 
   function removeIngredient(index: number) {
     setIngredients(ingredients.filter((_, i) => i !== index))
   }
 
-  function updateIngredient(index: number, field: keyof IngredientInput, value: string | number) {
+  function updateIngredient(index: number, field: keyof IngredientInput, value: string | number | boolean) {
     const updated = [...ingredients]
     updated[index] = { ...updated[index], [field]: value }
     setIngredients(updated)
@@ -273,6 +274,20 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
                 </option>
               ))}
             </select>
+            <button
+              type="button"
+              onClick={() => updateIngredient(i, 'shoppable', !ing.shoppable)}
+              className={`rounded-lg p-2 transition-colors ${
+                ing.shoppable
+                  ? 'text-olive hover:bg-olive-light'
+                  : 'text-muted/40 hover:bg-primary-light'
+              }`}
+              title={ing.shoppable ? 'Se añade a la lista de compra' : 'No se añade a la lista de compra'}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.5 3.5h2l.6 3M7 13h10l4-8H6.1M7 13l-1.4-7M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+              </svg>
+            </button>
             {ingredients.length > 1 && (
               <button
                 type="button"

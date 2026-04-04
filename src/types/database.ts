@@ -21,6 +21,7 @@ export interface Ingredient {
   quantity: number
   unit: IngredientUnit
   order: number
+  shoppable: boolean
 }
 
 export interface Step {

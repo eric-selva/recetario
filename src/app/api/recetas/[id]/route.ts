@@ -48,12 +48,13 @@ export async function PUT(
   if (ingredients) {
     await supabase.from('ingredients').delete().eq('recipe_id', id)
     if (ingredients.length) {
-      const ingredientRows = ingredients.map((ing: { name: string; quantity: number; unit: string }, i: number) => ({
+      const ingredientRows = ingredients.map((ing: { name: string; quantity: number; unit: string; shoppable?: boolean }, i: number) => ({
         recipe_id: id,
         name: ing.name,
         quantity: ing.quantity,
         unit: ing.unit,
         order: i,
+        ...(ing.shoppable !== undefined && { shoppable: ing.shoppable }),
       }))
       await supabase.from('ingredients').insert(ingredientRows)
     }
