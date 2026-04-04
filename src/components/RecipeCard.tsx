@@ -34,7 +34,7 @@ const mealTypeStyles: Record<
 
 interface RecipeCardProps {
   recipe: Recipe;
-  viewMode?: "grid" | "list";
+  viewMode?: "grid" | "grid-compact" | "list";
   onAddedToList?: () => void;
 }
 
@@ -139,12 +139,13 @@ export default function RecipeCard({
   onAddedToList,
 }: RecipeCardProps) {
   const style = mealTypeStyles[recipe.meal_type] ?? mealTypeStyles.comida;
+  const compact = viewMode === "grid-compact";
 
   if (viewMode === "list") {
     return (
-      <div className="group relative flex overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/20 hover:shadow-md">
+      <div className="group relative flex h-28 overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/20 hover:shadow-md">
         <Link href={`/recetas/${recipe.id}`} className="flex min-w-0 flex-1">
-          <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-primary-light/30 sm:h-32 sm:w-36">
+          <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-primary-light/30 sm:w-32">
             {recipe.image_url ? (
               <Image
                 src={recipe.image_url}
@@ -170,30 +171,17 @@ export default function RecipeCard({
               </div>
             )}
           </div>
-          <div className="flex min-w-0 flex-1 flex-col justify-center p-4 pr-14">
-            <div className="mb-1.5 flex items-center gap-2">
+          <div className="flex min-w-0 flex-1 flex-col justify-center px-3 pr-12">
+            <div className="mb-0.5 flex items-center gap-1.5">
               <span
-                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium ${style.bg} ${style.text}`}
+                className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium ${style.bg} ${style.text}`}
               >
-                <svg
-                  className="h-3 w-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d={style.icon}
-                  />
-                </svg>
                 {mealTypeLabels[recipe.meal_type]}
               </span>
               {recipe.prep_time > 0 && (
-                <span className="flex items-center gap-1 text-xs text-muted">
+                <span className="flex items-center gap-0.5 text-[10px] text-muted">
                   <svg
-                    className="h-3 w-3"
+                    className="h-2.5 w-2.5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -209,11 +197,11 @@ export default function RecipeCard({
                 </span>
               )}
             </div>
-            <h3 className="font-heading text-base font-semibold leading-snug group-hover:text-primary sm:text-lg">
+            <h3 className="line-clamp-1 font-heading text-base font-semibold leading-snug group-hover:text-primary sm:text-lg">
               {recipe.title}
             </h3>
             {recipe.description && (
-              <p className="mt-1 line-clamp-1 text-sm leading-relaxed text-muted">
+              <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-muted">
                 {recipe.description}
               </p>
             )}
@@ -231,9 +219,9 @@ export default function RecipeCard({
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/20 hover:shadow-md">
-      <Link href={`/recetas/${recipe.id}`}>
-        <div className="relative aspect-4/3 overflow-hidden bg-primary-light/30">
+    <div className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/20 hover:shadow-md ${compact ? "h-52 sm:h-[28rem]" : "h-[24rem] sm:h-[28rem]"}`}>
+      <Link href={`/recetas/${recipe.id}`} className="flex h-full flex-col">
+        <div className={`relative shrink-0 overflow-hidden bg-primary-light/30 ${compact ? "h-28 sm:h-64" : "h-52 sm:h-72"}`}>
           {recipe.image_url ? (
             <Image
               src={recipe.image_url}
@@ -261,18 +249,17 @@ export default function RecipeCard({
               </svg>
             </div>
           )}
-          {/* Gradient overlay */}
           {recipe.image_url && (
             <div className="absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-black/20 to-transparent" />
           )}
         </div>
-        <div className="p-4 pb-12">
-          <div className="mb-2.5 flex items-center gap-2">
+        <div className={`flex min-h-0 flex-1 flex-col ${compact ? "p-2 sm:p-4" : "p-4"}`}>
+          <div className={`flex items-center gap-1.5 ${compact ? "mb-0.5 sm:mb-2" : "mb-2"}`}>
             <span
-              className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium ${style.bg} ${style.text}`}
+              className={`inline-flex items-center gap-0.5 font-medium ${style.bg} ${style.text} ${compact ? "rounded px-1.5 py-0.5 text-[10px] sm:gap-1 sm:rounded-lg sm:px-2.5 sm:py-1 sm:text-xs" : "gap-1 rounded-lg px-2.5 py-1 text-xs"}`}
             >
               <svg
-                className="h-3 w-3"
+                className={compact ? "hidden sm:block h-3 w-3" : "h-3 w-3"}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -287,9 +274,9 @@ export default function RecipeCard({
               {mealTypeLabels[recipe.meal_type]}
             </span>
             {recipe.prep_time > 0 && (
-              <span className="flex items-center gap-1 text-xs text-muted">
+              <span className={`flex items-center text-muted ${compact ? "gap-0.5 text-[10px] sm:gap-1 sm:text-xs" : "gap-1 text-xs"}`}>
                 <svg
-                  className="h-3 w-3"
+                  className={compact ? "h-2.5 w-2.5 sm:h-3 sm:w-3" : "h-3 w-3"}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -304,20 +291,20 @@ export default function RecipeCard({
                 {recipe.prep_time} min
               </span>
             )}
+            <span className="ml-auto">
+              <AddToListButton recipeId={recipe.id} onAdded={onAddedToList} compact />
+            </span>
           </div>
-          <h3 className="font-heading text-lg font-semibold leading-snug group-hover:text-primary">
+          <h3 className={`line-clamp-2 font-heading font-semibold leading-tight group-hover:text-primary ${compact ? "text-sm sm:text-lg" : "text-lg sm:text-xl"}`}>
             {recipe.title}
           </h3>
           {recipe.description && (
-            <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted">
+            <p className={`mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted ${compact ? "hidden sm:block" : ""}`}>
               {recipe.description}
             </p>
           )}
         </div>
       </Link>
-      <div className="absolute bottom-3 right-3 z-10">
-        <AddToListButton recipeId={recipe.id} onAdded={onAddedToList} />
-      </div>
     </div>
   );
 }

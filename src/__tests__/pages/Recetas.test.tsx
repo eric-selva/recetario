@@ -38,9 +38,9 @@ describe('Recetas Page', () => {
     expect(screen.getByText('Recetas')).toBeInTheDocument()
   })
 
-  it('renders "Nueva receta" button', () => {
+  it('renders "Nueva" button', () => {
     render(<RecetasPage />)
-    expect(screen.getByText('Nueva receta')).toBeInTheDocument()
+    expect(screen.getByText('+ Nueva')).toBeInTheDocument()
   })
 
   it('shows skeleton while loading', () => {
@@ -94,9 +94,12 @@ describe('Recetas Page', () => {
     })
   })
 
-  it('shows "Crear receta" link in empty state', async () => {
+  it('shows "Crear receta" link in empty state when filter is "todas"', async () => {
     mockFetch({ '/api/recetas': [] })
     render(<RecetasPage />)
+
+    // Default filter is "comida", switch to "todas" to see "Crear receta" link
+    fireEvent.click(screen.getByRole('button', { name: 'Todas' }))
 
     await waitFor(() => {
       expect(screen.getByText('Crear receta')).toBeInTheDocument()

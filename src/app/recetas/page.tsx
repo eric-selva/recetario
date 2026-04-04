@@ -17,7 +17,7 @@ const mealTypes = [
 type ViewMode = "grid-3" | "grid-2" | "list";
 
 const viewModeGridClass: Record<ViewMode, string> = {
-  "grid-3": "grid gap-6 sm:grid-cols-2 lg:grid-cols-3",
+  "grid-3": "grid gap-6 grid-cols-1",
   "grid-2": "grid gap-6 grid-cols-2",
   list: "flex flex-col gap-4",
 };
@@ -28,14 +28,14 @@ export default function RecetasPage() {
   const [mealType, setMealType] = useState("comida");
   const [search, setSearch] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("recetas-view") as ViewMode;
-      if (saved === "grid-3" || saved === "grid-2" || saved === "list")
-        return saved;
+  const [viewMode, setViewMode] = useState<ViewMode>("grid-2");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("recetas-view") as ViewMode;
+    if (saved === "grid-3" || saved === "grid-2" || saved === "list") {
+      setViewMode(saved);
     }
-    return "grid-2";
-  });
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setSearchDebounced(search), 300);
@@ -83,7 +83,7 @@ export default function RecetasPage() {
             onClick={() => setViewMode("grid-3")}
             className={`rounded-lg p-2 transition-colors ${
               viewMode === "grid-3"
-                ? "bg-primary text-white shadow-sm"
+                ? "bg-primary/15 text-primary"
                 : "text-muted hover:text-foreground"
             }`}
             title="Cuadrícula 3 columnas"
@@ -112,7 +112,7 @@ export default function RecetasPage() {
             onClick={() => setViewMode("grid-2")}
             className={`rounded-lg p-2 transition-colors ${
               viewMode === "grid-2"
-                ? "bg-primary text-white shadow-sm"
+                ? "bg-primary/15 text-primary"
                 : "text-muted hover:text-foreground"
             }`}
             title="Cuadrícula 2 columnas"
@@ -168,7 +168,7 @@ export default function RecetasPage() {
             onClick={() => setViewMode("list")}
             className={`rounded-lg p-2 transition-colors ${
               viewMode === "list"
-                ? "bg-primary text-white shadow-sm"
+                ? "bg-primary/15 text-primary"
                 : "text-muted hover:text-foreground"
             }`}
             title="Lista"
@@ -237,7 +237,7 @@ export default function RecetasPage() {
                   key={i}
                   className="flex animate-pulse overflow-hidden rounded-2xl border border-border bg-card"
                 >
-                  <div className="h-28 w-28 shrink-0 bg-primary-light/30 sm:h-32 sm:w-36" />
+                  <div className="h-28 w-28 shrink-0 bg-primary-light/30 sm:w-32" />
                   <div className="flex flex-1 flex-col justify-center p-4 space-y-3">
                     <div className="h-5 w-20 rounded-lg bg-primary-light/40" />
                     <div className="h-5 w-3/4 rounded-lg bg-primary-light/30" />
@@ -306,7 +306,7 @@ export default function RecetasPage() {
               <RecipeCard
                 key={recipe.id}
                 recipe={recipe}
-                viewMode={viewMode === "list" ? "list" : "grid"}
+                viewMode={viewMode === "list" ? "list" : viewMode === "grid-2" ? "grid-compact" : "grid"}
               />
             ))}
           </div>

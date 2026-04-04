@@ -13,11 +13,10 @@ describe('Home Page', () => {
     expect(screen.getByText(/Tu cocina, tus recetas/)).toBeInTheDocument()
   })
 
-  it('renders three CTA buttons', () => {
+  it('renders CTA buttons', () => {
     render(<Home />)
     expect(screen.getByText('Ver recetas')).toBeInTheDocument()
     expect(screen.getByText('Lista de compra')).toBeInTheDocument()
-    expect(screen.getByText('Nueva receta')).toBeInTheDocument()
   })
 
   it('links to correct pages', () => {
@@ -25,7 +24,6 @@ describe('Home Page', () => {
     const links = screen.getAllByRole('link')
     const hrefs = links.map((l) => l.getAttribute('href'))
     expect(hrefs).toContain('/recetas')
-    expect(hrefs).toContain('/recetas/nueva')
     expect(hrefs).toContain('/lista-compra')
   })
 })

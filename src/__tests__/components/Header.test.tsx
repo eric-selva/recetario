@@ -3,6 +3,11 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import Header from '@/components/Header'
 import { mockFetch } from '../setup'
 
+// Header returns null on "/" — mock pathname to "/recetas"
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/recetas',
+}))
+
 describe('Header', () => {
   beforeEach(() => {
     mockFetch({ '/api/lista-compra': [] })

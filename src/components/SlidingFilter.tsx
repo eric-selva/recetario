@@ -51,7 +51,7 @@ export default function SlidingFilter({ options, value, onChange }: SlidingFilte
     >
       {/* Sliding background */}
       <div
-        className="absolute top-1 bottom-1 rounded-lg bg-primary shadow-sm"
+        className="absolute top-1 bottom-1 rounded-lg bg-primary/15"
         style={{
           left: indicator.left,
           width: indicator.width,
@@ -66,7 +66,7 @@ export default function SlidingFilter({ options, value, onChange }: SlidingFilte
           onClick={() => onChange(option.value)}
           className={`relative z-10 rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200 ${
             value === option.value
-              ? 'text-white'
+              ? 'text-primary'
               : 'text-muted hover:text-foreground'
           }`}
         >
