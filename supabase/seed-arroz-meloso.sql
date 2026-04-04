@@ -7,7 +7,7 @@ BEGIN
   VALUES (
     'Arroz meloso con setas y costillas',
     'Un arroz cremoso y reconfortante con costilla de cerdo, salchichas frescas y setas. El sofrito de cebolla, ajo y tomate le da una base de sabor increible.',
-    'https://static.bainet.es/clip/b9f6d79b-3e9d-4b68-be6a-2f524254ad0b_source-aspect-ratio_1600w_0.jpg',
+    'https://cfohqbwqpbeoebgnctni.supabase.co/storage/v1/object/public/recipe-images/arroz-meloso.jpg',
     'comida',
     60,
     4

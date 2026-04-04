@@ -7,7 +7,7 @@ VALUES (
   gen_random_uuid(),
   'Espaguetis a la Boloñesa',
   'La clasica receta italiana de pasta con salsa de carne, tomate y verduras. Cocinada a fuego lento para un sabor intenso.',
-  'https://images.unsplash.com/photo-1622973536968-3ead9e780960?w=800&q=80',
+  'https://cfohqbwqpbeoebgnctni.supabase.co/storage/v1/object/public/recipe-images/espaguetis-bolognesa.jpg',
   'comida',
   90,
   2
