@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/Header";
 import "./globals.css";
@@ -14,8 +14,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mi Recetario",
-  description: "Recetario personal con lista de la compra",
+  title: {
+    default: "Mi Recetario",
+    template: "%s | Mi Recetario",
+  },
+  description: "Recetario personal con lista de la compra semanal",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.svg",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#ea580c",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

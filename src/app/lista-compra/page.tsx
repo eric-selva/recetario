@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
+import { Skeleton } from 'boneyard-js/react'
 
 interface ShoppingItem {
   id: string
@@ -93,11 +94,24 @@ export default function ListaCompraPage() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
         <h1 className="text-3xl font-bold">Lista de la compra</h1>
-        <div className="mt-8 animate-pulse space-y-3">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-14 rounded-xl bg-stone-100" />
-          ))}
-        </div>
+        <Skeleton
+          name="shopping-list"
+          loading={true}
+          className="mt-8"
+          fixture={
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <div className="h-10 w-32 rounded-full bg-stone-200" />
+                <div className="h-10 w-32 rounded-full bg-stone-200" />
+              </div>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-14 rounded-xl bg-stone-200" />
+              ))}
+            </div>
+          }
+        >
+          <div />
+        </Skeleton>
       </div>
     )
   }

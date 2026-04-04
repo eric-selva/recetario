@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Skeleton } from 'boneyard-js/react'
+import Toast from '@/components/Toast'
 import type { RecipeWithDetails } from '@/types/database'
 
 const mealTypeLabels: Record<string, string> = {
@@ -18,7 +20,7 @@ export default function RecetaDetailPage() {
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [addingToList, setAddingToList] = useState(false)
-  const [addedToList, setAddedToList] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
     fetch(`/api/recetas/${id}`)
@@ -39,8 +41,7 @@ export default function RecetaDetailPage() {
       body: JSON.stringify({ recipe_id: id }),
     })
     if (res.ok) {
-      setAddedToList(true)
-      setTimeout(() => setAddedToList(false), 3000)
+      setToast('Receta añadida a la lista de compra')
     }
     setAddingToList(false)
   }
@@ -51,22 +52,7 @@ export default function RecetaDetailPage() {
     if (res.ok) router.push('/recetas')
   }
 
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 w-48 rounded bg-stone-100" />
-          <div className="aspect-video rounded-2xl bg-stone-100" />
-          <div className="space-y-3">
-            <div className="h-5 w-full rounded bg-stone-100" />
-            <div className="h-5 w-3/4 rounded bg-stone-100" />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!recipe) {
+  if (!loading && !recipe) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-20 text-center">
         <p className="text-lg font-medium">Receta no encontrada</p>
@@ -78,7 +64,31 @@ export default function RecetaDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <Skeleton
+      name="recipe-detail"
+      loading={loading}
+      className="mx-auto max-w-3xl px-4 py-8"
+      fixture={
+        <div className="space-y-6">
+          <div className="h-6 w-32 rounded bg-stone-200" />
+          <div className="aspect-video rounded-2xl bg-stone-200" />
+          <div className="space-y-3">
+            <div className="h-8 w-3/4 rounded bg-stone-200" />
+            <div className="h-5 w-full rounded bg-stone-200" />
+          </div>
+          <div className="flex gap-3">
+            <div className="h-10 w-48 rounded-xl bg-stone-200" />
+            <div className="h-10 w-24 rounded-xl bg-stone-200" />
+          </div>
+          <div className="space-y-2">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-12 rounded-lg bg-stone-200" />
+            ))}
+          </div>
+        </div>
+      }
+    >
+    {recipe && <div>
       {/* Back link */}
       <Link href="/recetas" className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground">
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -123,27 +133,12 @@ export default function RecetaDetailPage() {
         <button
           onClick={handleAddToShoppingList}
           disabled={addingToList}
-          className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors ${
-            addedToList
-              ? 'bg-green-600 text-white'
-              : 'bg-accent text-white hover:bg-accent/90'
-          }`}
+          className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
         >
-          {addedToList ? (
-            <>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-              Añadida a la lista
-            </>
-          ) : (
-            <>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
-              </svg>
-              Añadir a la lista de compra
-            </>
-          )}
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+          </svg>
+          {addingToList ? 'Añadiendo...' : 'Añadir a la lista de compra'}
         </button>
         <Link
           href={`/recetas/${id}/editar`}
@@ -195,6 +190,9 @@ export default function RecetaDetailPage() {
           </ol>
         </section>
       )}
-    </div>
+
+      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+    </div>}
+    </Skeleton>
   )
 }

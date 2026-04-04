@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { Skeleton } from 'boneyard-js/react'
 import RecipeCard from '@/components/RecipeCard'
 import type { Recipe } from '@/types/database'
 
@@ -95,48 +96,54 @@ export default function RecetasPage() {
       </div>
 
       {/* Recipe grid */}
-      {loading ? (
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="animate-pulse rounded-2xl border border-border bg-card">
-              <div className="aspect-[4/3] bg-stone-100" />
-              <div className="p-4 space-y-3">
-                <div className="h-5 w-16 rounded bg-stone-100" />
-                <div className="h-5 w-3/4 rounded bg-stone-100" />
-                <div className="h-4 w-full rounded bg-stone-100" />
+      <Skeleton
+        name="recipe-grid"
+        loading={loading}
+        className="mt-6"
+        fixture={
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="rounded-2xl border border-border bg-card">
+                <div className="aspect-[4/3] bg-stone-200" />
+                <div className="p-4 space-y-3">
+                  <div className="h-5 w-16 rounded bg-stone-200" />
+                  <div className="h-5 w-3/4 rounded bg-stone-200" />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : recipes.length === 0 ? (
-        <div className="mt-20 flex flex-col items-center gap-4 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-light/50 text-accent">
-            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
+            ))}
           </div>
-          <p className="text-lg font-medium">No hay recetas</p>
-          <p className="text-sm text-muted">
-            {search || mealType !== 'todas'
-              ? 'No se encontraron recetas con estos filtros.'
-              : 'Empieza creando tu primera receta.'}
-          </p>
-          {!search && mealType === 'todas' && (
-            <Link
-              href="/recetas/nueva"
-              className="mt-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent/90"
-            >
-              Crear receta
-            </Link>
-          )}
-        </div>
-      ) : (
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {recipes.map((recipe) => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
-          ))}
-        </div>
-      )}
+        }
+      >
+        {recipes.length === 0 ? (
+          <div className="mt-14 flex flex-col items-center gap-4 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-light/50 text-accent">
+              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <p className="text-lg font-medium">No hay recetas</p>
+            <p className="text-sm text-muted">
+              {search || mealType !== 'todas'
+                ? 'No se encontraron recetas con estos filtros.'
+                : 'Empieza creando tu primera receta.'}
+            </p>
+            {!search && mealType === 'todas' && (
+              <Link
+                href="/recetas/nueva"
+                className="mt-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent/90"
+              >
+                Crear receta
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {recipes.map((recipe) => (
+              <RecipeCard key={recipe.id} recipe={recipe} />
+            ))}
+          </div>
+        )}
+      </Skeleton>
     </div>
   )
 }
