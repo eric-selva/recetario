@@ -9,6 +9,7 @@ interface ShoppingItem {
   id: string
   recipe_id: string
   added_at: string
+  servings: number
   recipe?: {
     id: string
     title: string
@@ -42,16 +43,18 @@ export default function ListaCompraPage() {
     const map = new Map<string, { name: string; quantity: number; unit: string }>()
 
     for (const item of items) {
+      const multiplier = item.servings || 4
       for (const ing of item.ingredients) {
         const normalized = ing.name.toLowerCase().trim()
         const key = `${normalized}__${ing.unit}`
         if (removed.has(key)) continue
 
+        const scaledQty = ing.quantity * multiplier
         const existing = map.get(key)
         if (existing) {
-          existing.quantity += ing.quantity
+          existing.quantity += scaledQty
         } else {
-          map.set(key, { name: ing.name, quantity: ing.quantity, unit: ing.unit })
+          map.set(key, { name: ing.name, quantity: scaledQty, unit: ing.unit })
         }
       }
     }
@@ -211,6 +214,9 @@ export default function ListaCompraPage() {
               >
                 {item.recipe?.title ?? 'Receta'}
               </Link>
+              <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary">
+                ×{item.servings}
+              </span>
               <button
                 onClick={() => removeRecipe(item.id)}
                 className="text-muted hover:text-red-600"

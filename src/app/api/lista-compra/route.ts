@@ -43,11 +43,11 @@ export async function GET() {
 
 // POST /api/lista-compra — add a recipe to shopping list
 export async function POST(request: NextRequest) {
-  const { recipe_id } = await request.json()
+  const { recipe_id, servings = 4 } = await request.json()
 
   const { data, error } = await supabase
     .from('shopping_list')
-    .insert({ recipe_id })
+    .insert({ recipe_id, servings })
     .select()
     .single()
 

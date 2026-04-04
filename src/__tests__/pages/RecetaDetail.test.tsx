@@ -57,11 +57,11 @@ describe('Receta Detail Page', () => {
     })
   })
 
-  it('renders prep time and servings', async () => {
+  it('renders prep time and servings selector', async () => {
     render(<RecetaDetailPage />)
     await waitFor(() => {
       expect(screen.getByText('90 min')).toBeInTheDocument()
-      expect(screen.getByText('2 raciones')).toBeInTheDocument()
+      expect(screen.getByText('Raciones:')).toBeInTheDocument()
     })
   })
 
@@ -79,8 +79,9 @@ describe('Receta Detail Page', () => {
       expect(screen.getByText('Ingredientes')).toBeInTheDocument()
       expect(screen.getByText('Espaguetis')).toBeInTheDocument()
       expect(screen.getByText('Carne picada')).toBeInTheDocument()
-      expect(screen.getByText('150 g')).toBeInTheDocument()
-      expect(screen.getByText('250 g')).toBeInTheDocument()
+      // Quantities are per-person × 4 (default servings): 150×4=600, 250×4=1000
+      expect(screen.getByText('600 g')).toBeInTheDocument()
+      expect(screen.getByText('1000 g')).toBeInTheDocument()
     })
   })
 

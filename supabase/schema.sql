@@ -42,7 +42,8 @@ CREATE TABLE steps (
 CREATE TABLE shopping_list (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   recipe_id UUID NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
-  added_at TIMESTAMPTZ DEFAULT now() NOT NULL
+  added_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  servings INT NOT NULL DEFAULT 4
 );
 
 -- Indices para rendimiento

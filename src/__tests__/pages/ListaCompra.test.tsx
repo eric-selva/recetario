@@ -9,6 +9,7 @@ const mockShoppingList = [
     id: "sl1",
     recipe_id: "r1",
     added_at: "2024-01-01T00:00:00Z",
+    servings: 1,
     recipe: { id: "r1", title: "Espaguetis Boloñesa", meal_type: "comida" },
     ingredients: [
       { id: "i1", name: "Espaguetis", quantity: 150, unit: "g" },
@@ -19,6 +20,7 @@ const mockShoppingList = [
     id: "sl2",
     recipe_id: "r2",
     added_at: "2024-01-02T00:00:00Z",
+    servings: 1,
     recipe: { id: "r2", title: "Ensalada de tomate", meal_type: "cena" },
     ingredients: [
       { id: "i3", name: "Tomate", quantity: 300, unit: "g" },

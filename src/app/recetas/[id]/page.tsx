@@ -27,6 +27,7 @@ export default function RecetaDetailPage() {
   const [loading, setLoading] = useState(true)
   const [addingToList, setAddingToList] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [servings, setServings] = useState(4)
 
   useEffect(() => {
     fetch(`/api/recetas/${id}`)
@@ -44,7 +45,7 @@ export default function RecetaDetailPage() {
     const res = await fetch('/api/lista-compra', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recipe_id: id }),
+      body: JSON.stringify({ recipe_id: id, servings }),
     })
     if (res.ok) {
       setToast('Receta añadida a la lista de compra')
@@ -139,12 +140,29 @@ export default function RecetaDetailPage() {
               {recipe.prep_time} min
             </span>
           )}
-          <span className="flex items-center gap-1 text-sm text-muted">
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-            </svg>
-            {recipe.servings} raciones
-          </span>
+        </div>
+
+        {/* Servings selector */}
+        <div className="mt-4 flex items-center gap-3">
+          <svg className="h-4 w-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+          </svg>
+          <span className="text-sm font-medium text-muted">Raciones:</span>
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+              <button
+                key={n}
+                onClick={() => setServings(n)}
+                className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-semibold transition-all ${
+                  servings === n
+                    ? 'bg-primary text-white shadow-md shadow-primary/20'
+                    : 'bg-card border border-border hover:border-primary/30 hover:bg-primary-light/30'
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
         </div>
         <h1 className="mt-4 font-heading text-3xl font-bold sm:text-4xl">{recipe.title}</h1>
         {recipe.description && (
@@ -204,7 +222,7 @@ export default function RecetaDetailPage() {
                 className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:bg-card-hover"
               >
                 <span className="text-sm font-semibold text-primary">
-                  {ing.quantity > 0 && `${ing.quantity} ${ing.unit}`}
+                  {ing.quantity > 0 && `${formatQty(ing.quantity * servings)} ${ing.unit}`}
                 </span>
                 <span className="text-sm">{ing.name}</span>
               </li>
@@ -241,4 +259,10 @@ export default function RecetaDetailPage() {
     </div>}
     </Skeleton>
   )
+}
+
+function formatQty(q: number): string {
+  if (q === 0) return '0'
+  const rounded = Math.round(q * 100) / 100
+  return rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(1).replace(/\.0$/, '')
 }

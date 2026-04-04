@@ -35,6 +35,7 @@ export interface ShoppingListItem {
   id: string
   recipe_id: string
   added_at: string
+  servings: number
   recipe?: Recipe
 }
 
