@@ -1,65 +1,87 @@
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="mx-auto max-w-5xl px-4 py-16">
+      {/* Hero */}
+      <section className="flex flex-col items-center gap-6 text-center">
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+          Mi <span className="text-accent">Recetario</span>
+        </h1>
+        <p className="max-w-md text-lg text-muted">
+          Todas tus recetas en un solo lugar. Organiza tus comidas y genera tu
+          lista de la compra semanal.
+        </p>
+        <div className="flex gap-4">
+          <Link
+            href="/recetas"
+            className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent/90"
+          >
+            Ver recetas
+          </Link>
+          <Link
+            href="/lista-compra"
+            className="rounded-xl border border-border px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent-light/30"
+          >
+            Lista de compra
+          </Link>
+        </div>
+      </section>
+
+      {/* Quick cards */}
+      <section className="mt-20 grid gap-6 sm:grid-cols-3">
+        <QuickCard
+          title="Recetas"
+          description="Explora tus recetas por tipo de comida o busca por ingredientes."
+          href="/recetas"
+          icon="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        <QuickCard
+          title="Nueva receta"
+          description="Crea una receta con ingredientes, cantidades y paso a paso."
+          href="/recetas/nueva"
+          icon="M12 4.5v15m7.5-7.5h-15"
+        />
+        <QuickCard
+          title="Lista de compra"
+          description="Genera tu lista semanal a partir de las recetas que elijas."
+          href="/lista-compra"
+          icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </section>
     </div>
+  );
+}
+
+function QuickCard({
+  title,
+  description,
+  href,
+  icon,
+}: {
+  title: string;
+  description: string;
+  href: string;
+  icon: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex flex-col gap-3 rounded-2xl border border-border bg-card p-6 transition-all hover:border-accent/30 hover:shadow-md"
+    >
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-light/50 text-accent">
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
+        </svg>
+      </div>
+      <h3 className="text-lg font-semibold group-hover:text-accent">{title}</h3>
+      <p className="text-sm text-muted">{description}</p>
+    </Link>
   );
 }
