@@ -102,13 +102,13 @@ describe("Lista de Compra Page", () => {
       expect(screen.getByText("Espaguetis")).toBeInTheDocument();
     });
 
-    expect(screen.queryByText(/Quitar seleccionados/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Quitar/)).not.toBeInTheDocument();
 
     const espaguetisRow = screen.getByText("Espaguetis").closest("button")!;
     fireEvent.click(espaguetisRow);
 
     await waitFor(() => {
-      expect(screen.getByText(/Quitar seleccionados/)).toBeInTheDocument();
+      expect(screen.getByText(/Quitar/)).toBeInTheDocument();
     });
   });
 
