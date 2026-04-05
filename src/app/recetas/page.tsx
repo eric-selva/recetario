@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Skeleton } from "boneyard-js/react";
 import RecipeCard from "@/components/RecipeCard";
 import SlidingFilter from "@/components/SlidingFilter";
+import { cachedFetch, invalidateCache } from "@/lib/fetchCache";
 import type { Recipe } from "@/types/database";
 
 const mealTypes = [
@@ -14,6 +15,8 @@ const mealTypes = [
   { value: "cena", label: "Cena" },
 ];
 
+const PAGE_SIZE = 10;
+
 type ViewMode = "grid-3" | "grid-2" | "list";
 
 const viewModeGridClass: Record<ViewMode, string> = {
@@ -22,13 +25,22 @@ const viewModeGridClass: Record<ViewMode, string> = {
   list: "flex flex-col gap-4",
 };
 
+interface PaginatedResponse {
+  data: Recipe[];
+  total: number;
+}
+
 export default function RecetasPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [offset, setOffset] = useState(0);
   const [mealType, setMealType] = useState("comida");
   const [search, setSearch] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("grid-2");
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("recetas-view") as ViewMode;
@@ -46,17 +58,63 @@ export default function RecetasPage() {
     localStorage.setItem("recetas-view", viewMode);
   }, [viewMode]);
 
+  // Build URL for api call
+  const buildUrl = useCallback(
+    (extraOffset?: number) => {
+      const params = new URLSearchParams();
+      if (mealType !== "todas") params.set("meal_type", mealType);
+      if (searchDebounced) params.set("search", searchDebounced);
+      params.set("limit", String(PAGE_SIZE));
+      params.set("offset", String(extraOffset ?? 0));
+      return `/api/recetas?${params}`;
+    },
+    [mealType, searchDebounced],
+  );
+
+  // Initial load (reset on filter/search change)
   useEffect(() => {
     setLoading(true);
-    const params = new URLSearchParams();
-    if (mealType !== "todas") params.set("meal_type", mealType);
-    if (searchDebounced) params.set("search", searchDebounced);
+    setOffset(0);
 
-    fetch(`/api/recetas?${params}`)
-      .then((res) => res.json())
-      .then((data) => setRecipes(Array.isArray(data) ? data : []))
+    cachedFetch<PaginatedResponse>(buildUrl(0))
+      .then((res) => {
+        const data = res.data ?? [];
+        setRecipes(data);
+        setHasMore(data.length < (res.total ?? 0));
+      })
       .finally(() => setLoading(false));
-  }, [mealType, searchDebounced]);
+  }, [buildUrl]);
+
+  // Load more
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    const nextOffset = offset + PAGE_SIZE;
+    setLoadingMore(true);
+
+    cachedFetch<PaginatedResponse>(buildUrl(nextOffset))
+      .then((res) => {
+        const data = res.data ?? [];
+        setRecipes((prev) => [...prev, ...data]);
+        setOffset(nextOffset);
+        setHasMore(nextOffset + data.length < (res.total ?? 0));
+      })
+      .finally(() => setLoadingMore(false));
+  }, [loadingMore, hasMore, offset, buildUrl]);
+
+  // IntersectionObserver for infinite scroll
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore();
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -306,12 +364,58 @@ export default function RecetasPage() {
               <RecipeCard
                 key={recipe.id}
                 recipe={recipe}
-                viewMode={viewMode === "list" ? "list" : viewMode === "grid-2" ? "grid-compact" : "grid"}
+                viewMode={
+                  viewMode === "list"
+                    ? "list"
+                    : viewMode === "grid-2"
+                      ? "grid-compact"
+                      : "grid"
+                }
               />
             ))}
           </div>
         )}
       </Skeleton>
+
+      {/* Infinite scroll sentinel + skeleton cards */}
+      {!loading && hasMore && (
+        <div ref={sentinelRef}>
+          {loadingMore &&
+            (viewMode === "list" ? (
+              <div className="mt-4 flex flex-col gap-4 animate-pulse">
+                {[...Array(3)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex overflow-hidden rounded-2xl border border-border bg-card"
+                  >
+                    <div className="h-28 w-28 shrink-0 bg-primary-light/30 sm:w-32" />
+                    <div className="flex flex-1 flex-col justify-center p-4 space-y-3">
+                      <div className="h-4 w-16 rounded-lg bg-primary-light/40" />
+                      <div className="h-5 w-3/4 rounded-lg bg-primary-light/30" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div
+                className={`mt-6 animate-pulse ${viewModeGridClass[viewMode]}`}
+              >
+                {[...Array(4)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="overflow-hidden rounded-2xl border border-border bg-card"
+                  >
+                    <div className="aspect-4/3 bg-primary-light/30" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-4 w-16 rounded-lg bg-primary-light/40" />
+                      <div className="h-5 w-3/4 rounded-lg bg-primary-light/30" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+        </div>
+      )}
     </div>
   );
 }

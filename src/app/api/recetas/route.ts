@@ -1,32 +1,49 @@
 import { supabase } from "@/lib/supabase";
 import type { NextRequest } from "next/server";
 
-// GET /api/recetas — list all recipes (with optional filters)
+// GET /api/recetas — list recipes (with optional filters + pagination)
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const mealType = searchParams.get("meal_type");
   const search = searchParams.get("search");
+  const limit = Math.min(Number(searchParams.get("limit")) || 10, 50);
+  const offset = Math.max(Number(searchParams.get("offset")) || 0, 0);
 
   let query = supabase
     .from("recipes")
-    .select("*")
+    .select("*", { count: "exact" })
     .order("title", { ascending: true });
 
   if (mealType && mealType !== "todas") {
     query = query.eq("meal_type", mealType);
   }
 
-  const { data: recipes, error } = await query;
-
-  if (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
-
-  // If search term, filter by title or ingredient names
+  // If search term, we need all results first to filter by ingredient names,
+  // then paginate the filtered set
   if (search && search.trim()) {
     const term = search.toLowerCase().trim();
 
-    // Get ingredient names for all recipes via catalog join
+    // Fetch all (no pagination) for search—we filter in-memory
+    const { data: allRecipes, error } = await supabase
+      .from("recipes")
+      .select("*")
+      .order("title", { ascending: true })
+      .then((res) => {
+        if (res.error) return res;
+        if (mealType && mealType !== "todas") {
+          return {
+            ...res,
+            data: res.data?.filter((r) => r.meal_type === mealType) ?? [],
+          };
+        }
+        return res;
+      });
+
+    if (error) {
+      return Response.json({ error: error.message }, { status: 500 });
+    }
+
+    const recipes = allRecipes || [];
     const recipeIds = recipes.map((r) => r.id);
     const { data: ingredients } = await supabase
       .from("ingredients")
@@ -36,9 +53,8 @@ export async function GET(request: NextRequest) {
     const ingredientsByRecipe = new Map<string, string[]>();
     for (const ing of ingredients || []) {
       const list = ingredientsByRecipe.get(ing.recipe_id) || [];
-      // Use catalog name if available, fallback to ingredient name
       const catalogData = ing.catalog as unknown as { name: string } | null;
-      const ingName = catalogData?.name ?? '';
+      const ingName = catalogData?.name ?? "";
       list.push(ingName.toLowerCase());
       ingredientsByRecipe.set(ing.recipe_id, list);
     }
@@ -51,10 +67,19 @@ export async function GET(request: NextRequest) {
       return titleMatch || ingredientMatch;
     });
 
-    return Response.json(filtered);
+    const page = filtered.slice(offset, offset + limit);
+    return Response.json({ data: page, total: filtered.length });
   }
 
-  return Response.json(recipes);
+  // No search: use Supabase range for efficient pagination
+  query = query.range(offset, offset + limit - 1);
+  const { data: recipes, error, count } = await query;
+
+  if (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+
+  return Response.json({ data: recipes || [], total: count ?? 0 });
 }
 
 // POST /api/recetas — create a new recipe with ingredients and steps

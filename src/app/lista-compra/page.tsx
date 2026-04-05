@@ -1,153 +1,189 @@
-'use client'
+"use client";
 
-import { useEffect, useState, useMemo } from 'react'
-import Link from 'next/link'
-import { Skeleton } from 'boneyard-js/react'
-
+import { useEffect, useState, useMemo } from "react";
+import Link from "next/link";
+import { Skeleton } from "boneyard-js/react";
 
 interface ShoppingItem {
-  id: string
-  recipe_id: string
-  added_at: string
-  servings: number
+  id: string;
+  recipe_id: string;
+  added_at: string;
+  servings: number;
   recipe?: {
-    id: string
-    title: string
-    meal_type: string
-  }
+    id: string;
+    title: string;
+    meal_type: string;
+  };
   ingredients: {
-    id: string
-    catalog_id: string | null
-    name: string
-    quantity: number
-    unit: string
-  }[]
+    id: string;
+    catalog_id: string | null;
+    name: string;
+    quantity: number;
+    unit: string;
+  }[];
 }
 
 interface PantryIngredient {
-  catalog_id: string | null
-  name: string
-  quantity: number
-  unit: string
+  catalog_id: string | null;
+  name: string;
+  quantity: number;
+  unit: string;
 }
 
 export default function ListaCompraPage() {
-  const [items, setItems] = useState<ShoppingItem[]>([])
-  const [pantry, setPantry] = useState<PantryIngredient[]>([])
-  const [loading, setLoading] = useState(true)
-  const [checked, setChecked] = useState<Set<string>>(new Set())
-  const [removed, setRemoved] = useState<Set<string>>(new Set())
+  const [items, setItems] = useState<ShoppingItem[]>([]);
+  const [pantry, setPantry] = useState<PantryIngredient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [removed, setRemoved] = useState<Set<string>>(new Set());
+  const [mutating, setMutating] = useState(false);
+  const [removingRecipe, setRemovingRecipe] = useState<string | null>(null);
 
   function fetchList() {
-    setLoading(true)
+    setLoading(true);
     Promise.all([
-      fetch('/api/lista-compra').then((r) => r.json()),
-      fetch('/api/despensa?location=nevera').then((r) => r.json()),
+      fetch("/api/lista-compra").then((r) => r.json()),
+      fetch("/api/despensa?location=nevera").then((r) => r.json()),
     ])
       .then(([listData, pantryData]) => {
-        setItems(Array.isArray(listData) ? listData : [])
-        setPantry(Array.isArray(pantryData) ? pantryData : [])
+        setItems(Array.isArray(listData) ? listData : []);
+        setPantry(Array.isArray(pantryData) ? pantryData : []);
       })
-      .finally(() => setLoading(false))
+      .finally(() => setLoading(false));
   }
 
-  useEffect(() => { fetchList() }, [])
+  useEffect(() => {
+    fetchList();
+  }, []);
 
   const mergedIngredients = useMemo(() => {
-    const map = new Map<string, { catalogId: string | null; name: string; quantity: number; unit: string }>()
+    const map = new Map<
+      string,
+      { catalogId: string | null; name: string; quantity: number; unit: string }
+    >();
 
     for (const item of items) {
-      const multiplier = item.servings || 4
+      const multiplier = item.servings || 4;
       for (const ing of item.ingredients) {
         // Use catalog_id as primary key for merging, fallback to name
-        const mergeKey = ing.catalog_id || `name__${ing.name.toLowerCase().trim()}`
-        const key = `${mergeKey}__${ing.unit}`
-        if (removed.has(key)) continue
+        const mergeKey =
+          ing.catalog_id || `name__${ing.name.toLowerCase().trim()}`;
+        const key = `${mergeKey}__${ing.unit}`;
+        if (removed.has(key)) continue;
 
-        const scaledQty = ing.quantity * multiplier
-        const existing = map.get(key)
+        const scaledQty = ing.quantity * multiplier;
+        const existing = map.get(key);
         if (existing) {
-          existing.quantity += scaledQty
+          existing.quantity += scaledQty;
         } else {
-          map.set(key, { catalogId: ing.catalog_id, name: ing.name, quantity: scaledQty, unit: ing.unit })
+          map.set(key, {
+            catalogId: ing.catalog_id,
+            name: ing.name,
+            quantity: scaledQty,
+            unit: ing.unit,
+          });
         }
       }
     }
 
     // Build pantry lookup: by catalog_id first, fallback to name
-    const pantryByCatalogId = new Map<string, number>()
-    const pantryByName = new Map<string, number>()
+    const pantryByCatalogId = new Map<string, number>();
+    const pantryByName = new Map<string, number>();
     for (const p of pantry) {
       if (p.catalog_id) {
-        pantryByCatalogId.set(p.catalog_id, (pantryByCatalogId.get(p.catalog_id) || 0) + p.quantity)
+        pantryByCatalogId.set(
+          p.catalog_id,
+          (pantryByCatalogId.get(p.catalog_id) || 0) + p.quantity,
+        );
       } else {
-        const key = p.name.toLowerCase().trim()
-        pantryByName.set(key, (pantryByName.get(key) || 0) + p.quantity)
+        const key = p.name.toLowerCase().trim();
+        pantryByName.set(key, (pantryByName.get(key) || 0) + p.quantity);
       }
     }
 
-    const result: { key: string; name: string; quantity: number; unit: string; pantryDiscount: number }[] = []
+    const result: {
+      key: string;
+      name: string;
+      quantity: number;
+      unit: string;
+      pantryDiscount: number;
+    }[] = [];
     for (const [key, value] of map) {
       // Match pantry by catalog_id, fallback to name
-      let inPantry = 0
+      let inPantry = 0;
       if (value.catalogId) {
-        inPantry = pantryByCatalogId.get(value.catalogId) || 0
+        inPantry = pantryByCatalogId.get(value.catalogId) || 0;
       }
       if (inPantry === 0) {
-        inPantry = pantryByName.get(value.name.toLowerCase().trim()) || 0
+        inPantry = pantryByName.get(value.name.toLowerCase().trim()) || 0;
       }
 
-      const adjusted = Math.max(0, value.quantity - inPantry)
+      const adjusted = Math.max(0, value.quantity - inPantry);
       if (adjusted > 0) {
-        result.push({ key, name: value.name, quantity: adjusted, unit: value.unit, pantryDiscount: inPantry > 0 ? Math.min(inPantry, value.quantity) : 0 })
+        result.push({
+          key,
+          name: value.name,
+          quantity: adjusted,
+          unit: value.unit,
+          pantryDiscount: inPantry > 0 ? Math.min(inPantry, value.quantity) : 0,
+        });
       }
     }
 
-    return result
-  }, [items, pantry, removed])
+    return result;
+  }, [items, pantry, removed]);
 
   function toggleCheck(key: string) {
     setChecked((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   }
 
   function removeIngredient(key: string) {
-    setRemoved((prev) => new Set(prev).add(key))
+    setRemoved((prev) => new Set(prev).add(key));
     setChecked((prev) => {
-      const next = new Set(prev)
-      next.delete(key)
-      return next
-    })
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
   }
 
   function removeChecked() {
+    setMutating(true);
     setRemoved((prev) => {
-      const next = new Set(prev)
-      for (const key of checked) next.add(key)
-      return next
-    })
-    setChecked(new Set())
+      const next = new Set(prev);
+      for (const key of checked) next.add(key);
+      return next;
+    });
+    setChecked(new Set());
+    // Brief delay to show skeleton transition
+    setTimeout(() => setMutating(false), 300);
   }
 
   async function removeRecipe(itemId: string) {
-    await fetch(`/api/lista-compra?id=${itemId}`, { method: 'DELETE' })
-    setItems((prev) => prev.filter((i) => i.id !== itemId))
+    setRemovingRecipe(itemId);
+    await fetch(`/api/lista-compra?id=${itemId}`, { method: "DELETE" });
+    setItems((prev) => prev.filter((i) => i.id !== itemId));
+    setRemovingRecipe(null);
   }
 
   async function clearAll() {
-    if (!confirm('¿Vaciar toda la lista de la compra?')) return
-    await fetch('/api/lista-compra', { method: 'DELETE' })
-    setItems([])
-    setChecked(new Set())
-    setRemoved(new Set())
+    if (!confirm("¿Vaciar toda la lista de la compra?")) return;
+    setMutating(true);
+    await fetch("/api/lista-compra", { method: "DELETE" });
+    setItems([]);
+    setChecked(new Set());
+    setRemoved(new Set());
+    setMutating(false);
   }
 
-  const checkedCount = mergedIngredients.filter((i) => checked.has(i.key)).length
-  const totalCount = mergedIngredients.length
+  const checkedCount = mergedIngredients.filter((i) =>
+    checked.has(i.key),
+  ).length;
+  const totalCount = mergedIngredients.length;
 
   if (loading) {
     return (
@@ -172,7 +208,7 @@ export default function ListaCompraPage() {
           <div />
         </Skeleton>
       </div>
-    )
+    );
   }
 
   if (items.length === 0) {
@@ -181,12 +217,24 @@ export default function ListaCompraPage() {
         <h1 className="font-heading text-3xl font-bold">Lista de la compra</h1>
         <div className="mt-20 flex flex-col items-center gap-5 text-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-olive/10 text-olive">
-            <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            <svg
+              className="h-10 w-10"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+              />
             </svg>
           </div>
           <div>
-            <p className="font-heading text-xl font-semibold">La lista esta vacia</p>
+            <p className="font-heading text-xl font-semibold">
+              La lista esta vacia
+            </p>
             <p className="mt-1 text-sm text-muted">
               Añade recetas a la lista desde el detalle de cada receta.
             </p>
@@ -199,7 +247,7 @@ export default function ListaCompraPage() {
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -207,7 +255,9 @@ export default function ListaCompraPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold">Lista de la compra</h1>
+          <h1 className="font-heading text-3xl font-bold">
+            Lista de la compra
+          </h1>
           <p className="mt-1 text-sm text-muted">
             {checkedCount} de {totalCount} ingredientes
           </p>
@@ -218,18 +268,38 @@ export default function ListaCompraPage() {
               onClick={removeChecked}
               className="inline-flex items-center gap-2 rounded-xl border border-olive/30 px-4 py-2 text-sm font-semibold text-olive transition-all hover:bg-olive-light"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
-              Quitar  ({checkedCount})
+              Quitar ({checkedCount})
             </button>
           )}
           <button
             onClick={clearAll}
             className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition-all hover:bg-red-50"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+              />
             </svg>
             Vaciar lista
           </button>
@@ -240,23 +310,37 @@ export default function ListaCompraPage() {
       <section className="mt-8">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+              />
             </svg>
           </div>
-          <h2 className="font-heading text-lg font-semibold">Recetas de esta semana</h2>
+          <h2 className="font-heading text-lg font-semibold">
+            Recetas de esta semana
+          </h2>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm shadow-sm"
+              className={`flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm shadow-sm transition-opacity ${
+                removingRecipe === item.id ? "animate-pulse opacity-50" : ""
+              }`}
             >
               <Link
                 href={`/recetas/${item.recipe_id}`}
                 className="font-medium hover:text-primary"
               >
-                {item.recipe?.title ?? 'Receta'}
+                {item.recipe?.title ?? "Receta"}
               </Link>
               <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary">
                 ×{item.servings}
@@ -266,8 +350,18 @@ export default function ListaCompraPage() {
                 className="text-muted hover:text-red-600"
                 title="Quitar de la lista"
               >
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -281,8 +375,18 @@ export default function ListaCompraPage() {
       <section>
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-saffron/15 text-saffron">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+              />
             </svg>
           </div>
           <h2 className="font-heading text-lg font-semibold">Ingredientes</h2>
@@ -290,34 +394,48 @@ export default function ListaCompraPage() {
         <p className="mt-2 text-xs text-muted">
           Las cantidades se ajustan restando lo que ya tienes en la despensa.
         </p>
-        <ul className="mt-4 space-y-2">
+        <ul
+          className={`mt-4 space-y-2 transition-opacity ${mutating ? "pointer-events-none opacity-50" : ""}`}
+        >
           {mergedIngredients.map((ing) => (
             <li key={ing.key} className="flex items-center gap-2">
               <button
                 onClick={() => toggleCheck(ing.key)}
                 className={`flex flex-1 items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
                   checked.has(ing.key)
-                    ? 'border-olive/30 bg-olive-light/50'
-                    : 'border-border bg-card hover:border-primary/20 hover:shadow-sm'
+                    ? "border-olive/30 bg-olive-light/50"
+                    : "border-border bg-card hover:border-primary/20 hover:shadow-sm"
                 }`}
               >
                 {/* Checkbox */}
                 <span
                   className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all ${
                     checked.has(ing.key)
-                      ? 'border-olive bg-olive text-white'
-                      : 'border-muted/40'
+                      ? "border-olive bg-olive text-white"
+                      : "border-muted/40"
                   }`}
                 >
                   {checked.has(ing.key) && (
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    <svg
+                      className="h-3 w-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={3}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                   )}
                 </span>
 
                 {/* Ingredient info */}
-                <span className={`flex-1 ${checked.has(ing.key) ? 'text-muted line-through' : ''}`}>
+                <span
+                  className={`flex-1 ${checked.has(ing.key) ? "text-muted line-through" : ""}`}
+                >
                   <span className="font-medium capitalize">{ing.name}</span>
                   {ing.pantryDiscount > 0 && (
                     <span className="ml-2 text-[10px] text-olive">
@@ -327,8 +445,11 @@ export default function ListaCompraPage() {
                 </span>
 
                 {/* Quantity */}
-                <span className={`text-sm font-semibold ${checked.has(ing.key) ? 'text-muted' : 'text-primary'}`}>
-                  {ing.quantity > 0 && `${formatQuantity(ing.quantity)} ${ing.unit}`}
+                <span
+                  className={`text-sm font-semibold ${checked.has(ing.key) ? "text-muted" : "text-primary"}`}
+                >
+                  {ing.quantity > 0 &&
+                    `${formatQuantity(ing.quantity)} ${ing.unit}`}
                 </span>
               </button>
 
@@ -338,8 +459,18 @@ export default function ListaCompraPage() {
                 className="rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600"
                 title="Quitar ingrediente"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </li>
@@ -352,7 +483,9 @@ export default function ListaCompraPage() {
         <div className="mt-8 rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="flex items-center justify-between text-sm">
             <span className="font-heading font-semibold">Progreso</span>
-            <span className="text-muted">{Math.round((checkedCount / totalCount) * 100)}%</span>
+            <span className="text-muted">
+              {Math.round((checkedCount / totalCount) * 100)}%
+            </span>
           </div>
           <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-primary-light/50">
             <div
@@ -363,9 +496,9 @@ export default function ListaCompraPage() {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function formatQuantity(q: number): string {
-  return q % 1 === 0 ? q.toString() : q.toFixed(1)
+  return q % 1 === 0 ? q.toString() : q.toFixed(1);
 }
