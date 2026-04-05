@@ -75,8 +75,12 @@ export default function ListaCompraPage() {
   // Search state
   const [search, setSearch] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [recipeSuggestions, setRecipeSuggestions] = useState<RecipeSuggestion[]>([]);
-  const [ingredientSuggestions, setIngredientSuggestions] = useState<IngredientSuggestion[]>([]);
+  const [recipeSuggestions, setRecipeSuggestions] = useState<
+    RecipeSuggestion[]
+  >([]);
+  const [ingredientSuggestions, setIngredientSuggestions] = useState<
+    IngredientSuggestion[]
+  >([]);
   const [addingRecipe, setAddingRecipe] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -110,10 +114,10 @@ export default function ListaCompraPage() {
       const q = encodeURIComponent(search);
       Promise.all([
         cachedFetch<{ data: RecipeSuggestion[]; total: number }>(
-          `/api/recetas?search=${q}&limit=5&offset=0`
+          `/api/recetas?search=${q}&limit=5&offset=0`,
         ),
         cachedFetch<{ data: IngredientSuggestion[]; total: number }>(
-          `/api/ingredientes?search=${q}&limit=5&offset=0`
+          `/api/ingredientes?search=${q}&limit=5&offset=0`,
         ),
       ]).then(([recRes, ingRes]) => {
         setRecipeSuggestions(recRes.data ?? []);
@@ -170,7 +174,14 @@ export default function ListaCompraPage() {
   const mergedIngredients = useMemo(() => {
     const map = new Map<
       string,
-      { catalogId: string | null; name: string; quantity: number; unit: string; manual?: boolean; extraId?: string }
+      {
+        catalogId: string | null;
+        name: string;
+        quantity: number;
+        unit: string;
+        manual?: boolean;
+        extraId?: string;
+      }
     >();
 
     for (const item of items) {
@@ -217,7 +228,7 @@ export default function ListaCompraPage() {
       if (p.catalog_id) {
         pantryByCatalogId.set(
           p.catalog_id,
-          (pantryByCatalogId.get(p.catalog_id) || 0) + p.quantity
+          (pantryByCatalogId.get(p.catalog_id) || 0) + p.quantity,
         );
       } else {
         const key = p.name.toLowerCase().trim();
@@ -296,10 +307,14 @@ export default function ListaCompraPage() {
       return next;
     });
     // Delete extras that were checked
-    const checkedIngredients = mergedIngredients.filter((i) => checkedKeys.has(i.key));
+    const checkedIngredients = mergedIngredients.filter((i) =>
+      checkedKeys.has(i.key),
+    );
     for (const ing of checkedIngredients) {
       if (ing.extraId) {
-        fetch(`/api/lista-compra/extras?id=${ing.extraId}`, { method: "DELETE" });
+        fetch(`/api/lista-compra/extras?id=${ing.extraId}`, {
+          method: "DELETE",
+        });
         setExtras((prev) => prev.filter((e) => e.id !== ing.extraId));
       }
     }
@@ -331,7 +346,7 @@ export default function ListaCompraPage() {
   }
 
   const checkedCount = mergedIngredients.filter((i) =>
-    checked.has(i.key)
+    checked.has(i.key),
   ).length;
   const totalCount = mergedIngredients.length;
   const hasContent = items.length > 0 || extras.length > 0;
@@ -472,12 +487,26 @@ export default function ListaCompraPage() {
                     className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-primary-light transition-colors disabled:opacity-50"
                   >
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      <svg
+                        className="h-3.5 w-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                        />
                       </svg>
                     </span>
-                    <span className="min-w-0 flex-1 truncate font-medium">{r.title}</span>
-                    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${mealTypeStyles[r.meal_type] || ""}`}>
+                    <span className="min-w-0 flex-1 truncate font-medium">
+                      {r.title}
+                    </span>
+                    <span
+                      className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${mealTypeStyles[r.meal_type] || ""}`}
+                    >
                       {mealTypeLabels[r.meal_type] || r.meal_type}
                     </span>
                   </button>
@@ -488,7 +517,9 @@ export default function ListaCompraPage() {
             {/* Ingredient suggestions */}
             {ingredientSuggestions.length > 0 && (
               <>
-                <div className={`px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted ${recipeSuggestions.length > 0 ? "border-t border-border" : ""}`}>
+                <div
+                  className={`px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted ${recipeSuggestions.length > 0 ? "border-t border-border" : ""}`}
+                >
                   Ingredientes
                 </div>
                 {ingredientSuggestions.map((s) => (
@@ -498,8 +529,18 @@ export default function ListaCompraPage() {
                     className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-primary-light transition-colors"
                   >
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-saffron/10 text-saffron">
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      <svg
+                        className="h-3.5 w-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 4.5v15m7.5-7.5h-15"
+                        />
                       </svg>
                     </span>
                     <span className="font-medium capitalize">{s.name}</span>
@@ -515,12 +556,23 @@ export default function ListaCompraPage() {
               className="flex w-full items-center gap-3 border-t border-border px-4 py-2.5 text-left text-sm hover:bg-primary-light transition-colors"
             >
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-olive/10 text-olive">
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4.5v15m7.5-7.5h-15"
+                  />
                 </svg>
               </span>
               <span>
-                Añadir &quot;<span className="font-semibold">{search.trim()}</span>&quot;
+                Añadir &quot;
+                <span className="font-semibold">{search.trim()}</span>&quot;
               </span>
             </button>
           </div>
@@ -656,7 +708,8 @@ export default function ListaCompraPage() {
               </h2>
             </div>
             <p className="mt-2 text-xs text-muted">
-              Las cantidades se ajustan restando lo que ya tienes en la despensa.
+              Las cantidades se ajustan restando lo que ya tienes en la
+              despensa.
             </p>
             <ul
               className={`mt-4 space-y-2 transition-opacity ${mutating ? "pointer-events-none opacity-50" : ""}`}
