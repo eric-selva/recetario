@@ -21,14 +21,31 @@ export async function GET() {
 
   const [recipesRes, ingredientsRes] = await Promise.all([
     supabase.from('recipes').select('*').in('id', recipeIds),
-    supabase.from('ingredients').select('*').in('recipe_id', recipeIds).neq('shoppable', false).order('order'),
+    supabase
+      .from('ingredients')
+      .select('*, catalog:catalog_id(id, name, shoppable)')
+      .in('recipe_id', recipeIds)
+      .order('order'),
   ])
 
   const recipesMap = new Map((recipesRes.data || []).map((r) => [r.id, r]))
-  const ingredientsByRecipe = new Map<string, typeof ingredientsRes.data>()
+
+  // Filter shoppable and enrich with catalog data
+  const ingredientsByRecipe = new Map<string, Array<Record<string, unknown>>>()
   for (const ing of ingredientsRes.data || []) {
+    const catalog = ing.catalog as { id: string; name: string; shoppable: boolean } | null
+    const isShoppable = catalog?.shoppable ?? true
+
+    if (!isShoppable) continue
+
     const list = ingredientsByRecipe.get(ing.recipe_id) || []
-    list.push(ing)
+    list.push({
+      id: ing.id,
+      catalog_id: ing.catalog_id ?? catalog?.id ?? null,
+      name: catalog?.name ?? '',
+      quantity: ing.quantity,
+      unit: ing.unit,
+    })
     ingredientsByRecipe.set(ing.recipe_id, list)
   }
 

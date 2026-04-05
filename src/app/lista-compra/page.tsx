@@ -17,36 +17,51 @@ interface ShoppingItem {
   }
   ingredients: {
     id: string
+    catalog_id: string | null
     name: string
     quantity: number
     unit: string
   }[]
 }
 
+interface PantryIngredient {
+  catalog_id: string | null
+  name: string
+  quantity: number
+  unit: string
+}
+
 export default function ListaCompraPage() {
   const [items, setItems] = useState<ShoppingItem[]>([])
+  const [pantry, setPantry] = useState<PantryIngredient[]>([])
   const [loading, setLoading] = useState(true)
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [removed, setRemoved] = useState<Set<string>>(new Set())
 
   function fetchList() {
     setLoading(true)
-    fetch('/api/lista-compra')
-      .then((res) => res.json())
-      .then((data) => setItems(data))
+    Promise.all([
+      fetch('/api/lista-compra').then((r) => r.json()),
+      fetch('/api/despensa?location=nevera').then((r) => r.json()),
+    ])
+      .then(([listData, pantryData]) => {
+        setItems(Array.isArray(listData) ? listData : [])
+        setPantry(Array.isArray(pantryData) ? pantryData : [])
+      })
       .finally(() => setLoading(false))
   }
 
   useEffect(() => { fetchList() }, [])
 
   const mergedIngredients = useMemo(() => {
-    const map = new Map<string, { name: string; quantity: number; unit: string }>()
+    const map = new Map<string, { catalogId: string | null; name: string; quantity: number; unit: string }>()
 
     for (const item of items) {
       const multiplier = item.servings || 4
       for (const ing of item.ingredients) {
-        const normalized = ing.name.toLowerCase().trim()
-        const key = `${normalized}__${ing.unit}`
+        // Use catalog_id as primary key for merging, fallback to name
+        const mergeKey = ing.catalog_id || `name__${ing.name.toLowerCase().trim()}`
+        const key = `${mergeKey}__${ing.unit}`
         if (removed.has(key)) continue
 
         const scaledQty = ing.quantity * multiplier
@@ -54,13 +69,42 @@ export default function ListaCompraPage() {
         if (existing) {
           existing.quantity += scaledQty
         } else {
-          map.set(key, { name: ing.name, quantity: scaledQty, unit: ing.unit })
+          map.set(key, { catalogId: ing.catalog_id, name: ing.name, quantity: scaledQty, unit: ing.unit })
         }
       }
     }
 
-    return Array.from(map.entries()).map(([key, value]) => ({ key, ...value }))
-  }, [items, removed])
+    // Build pantry lookup: by catalog_id first, fallback to name
+    const pantryByCatalogId = new Map<string, number>()
+    const pantryByName = new Map<string, number>()
+    for (const p of pantry) {
+      if (p.catalog_id) {
+        pantryByCatalogId.set(p.catalog_id, (pantryByCatalogId.get(p.catalog_id) || 0) + p.quantity)
+      } else {
+        const key = p.name.toLowerCase().trim()
+        pantryByName.set(key, (pantryByName.get(key) || 0) + p.quantity)
+      }
+    }
+
+    const result: { key: string; name: string; quantity: number; unit: string; pantryDiscount: number }[] = []
+    for (const [key, value] of map) {
+      // Match pantry by catalog_id, fallback to name
+      let inPantry = 0
+      if (value.catalogId) {
+        inPantry = pantryByCatalogId.get(value.catalogId) || 0
+      }
+      if (inPantry === 0) {
+        inPantry = pantryByName.get(value.name.toLowerCase().trim()) || 0
+      }
+
+      const adjusted = Math.max(0, value.quantity - inPantry)
+      if (adjusted > 0) {
+        result.push({ key, name: value.name, quantity: adjusted, unit: value.unit, pantryDiscount: inPantry > 0 ? Math.min(inPantry, value.quantity) : 0 })
+      }
+    }
+
+    return result
+  }, [items, pantry, removed])
 
   function toggleCheck(key: string) {
     setChecked((prev) => {
@@ -244,7 +288,7 @@ export default function ListaCompraPage() {
           <h2 className="font-heading text-lg font-semibold">Ingredientes</h2>
         </div>
         <p className="mt-2 text-xs text-muted">
-          Especias, salsas, aceite, agua y basicos de despensa se excluyen automaticamente.
+          Las cantidades se ajustan restando lo que ya tienes en la despensa.
         </p>
         <ul className="mt-4 space-y-2">
           {mergedIngredients.map((ing) => (
@@ -275,6 +319,11 @@ export default function ListaCompraPage() {
                 {/* Ingredient info */}
                 <span className={`flex-1 ${checked.has(ing.key) ? 'text-muted line-through' : ''}`}>
                   <span className="font-medium capitalize">{ing.name}</span>
+                  {ing.pantryDiscount > 0 && (
+                    <span className="ml-2 text-[10px] text-olive">
+                      −{formatQuantity(ing.pantryDiscount)} en despensa
+                    </span>
+                  )}
                 </span>
 
                 {/* Quantity */}

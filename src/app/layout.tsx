@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Header from "@/components/Header";
+import AuthGate from "@/components/AuthGate";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
   description: "Tu recetario personal con lista de la compra semanal",
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/logo.png",
   },
 };
 
@@ -28,12 +29,14 @@ export default function RootLayout({
   return (
     <html lang="es" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <footer className="border-t border-border bg-card/50 py-6 text-center text-xs text-muted">
-          <div className="divider-herbs mb-4" />
-          Recetario &mdash; Cocina con amor
-        </footer>
+        <AuthGate>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <footer className="border-t border-border bg-card/50 py-6 text-center text-xs text-muted">
+            <div className="divider-herbs mb-4" />
+            Recetario &mdash; Cocina con amor
+          </footer>
+        </AuthGate>
       </body>
     </html>
   );

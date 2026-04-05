@@ -10,7 +10,7 @@ export async function GET(
 
   const [recipeRes, ingredientsRes, stepsRes] = await Promise.all([
     supabase.from('recipes').select('*').eq('id', id).single(),
-    supabase.from('ingredients').select('*').eq('recipe_id', id).order('order'),
+    supabase.from('ingredients').select('*, catalog:catalog_id(id, name, shoppable)').eq('recipe_id', id).order('order'),
     supabase.from('steps').select('*').eq('recipe_id', id).order('order'),
   ])
 
@@ -18,9 +18,24 @@ export async function GET(
     return Response.json({ error: 'Receta no encontrada' }, { status: 404 })
   }
 
+  // Enrich ingredients with catalog data
+  const ingredients = (ingredientsRes.data || []).map((ing) => {
+    const catalog = ing.catalog as { id: string; name: string; shoppable: boolean } | null
+    return {
+      id: ing.id,
+      recipe_id: ing.recipe_id,
+      catalog_id: ing.catalog_id,
+      name: catalog?.name ?? '',
+      quantity: ing.quantity,
+      unit: ing.unit,
+      order: ing.order,
+      shoppable: catalog?.shoppable ?? true,
+    }
+  })
+
   return Response.json({
     ...recipeRes.data,
-    ingredients: ingredientsRes.data || [],
+    ingredients,
     steps: stepsRes.data || [],
   })
 }
@@ -48,14 +63,23 @@ export async function PUT(
   if (ingredients) {
     await supabase.from('ingredients').delete().eq('recipe_id', id)
     if (ingredients.length) {
-      const ingredientRows = ingredients.map((ing: { name: string; quantity: number; unit: string; shoppable?: boolean }, i: number) => ({
-        recipe_id: id,
-        name: ing.name,
-        quantity: ing.quantity,
-        unit: ing.unit,
-        order: i,
-        ...(ing.shoppable !== undefined && { shoppable: ing.shoppable }),
-      }))
+      const ingredientRows = []
+      for (let i = 0; i < ingredients.length; i++) {
+        const ing = ingredients[i] as {
+          name: string
+          quantity: number
+          unit: string
+          shoppable?: boolean
+        }
+        const catalogId = await resolveCatalogId(ing.name, ing.unit, ing.shoppable)
+        ingredientRows.push({
+          recipe_id: id,
+          catalog_id: catalogId,
+          quantity: ing.quantity,
+          unit: ing.unit,
+          order: i,
+        })
+      }
       await supabase.from('ingredients').insert(ingredientRows)
     }
   }
@@ -90,4 +114,36 @@ export async function DELETE(
   }
 
   return Response.json({ success: true })
+}
+
+// Look up or create a catalog entry, returns catalog ID
+async function resolveCatalogId(
+  name: string,
+  unit: string,
+  shoppable?: boolean,
+): Promise<string | null> {
+  const trimmed = name.trim()
+
+  // Try to find existing
+  const { data: existing } = await supabase
+    .from('catalog')
+    .select('id')
+    .ilike('name', trimmed)
+    .limit(1)
+    .single()
+
+  if (existing) return existing.id
+
+  // Create new catalog entry
+  const { data: created } = await supabase
+    .from('catalog')
+    .insert({
+      name: trimmed,
+      default_unit: unit,
+      shoppable: shoppable ?? true,
+    })
+    .select('id')
+    .single()
+
+  return created?.id ?? null
 }

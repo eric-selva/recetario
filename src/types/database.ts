@@ -14,9 +14,18 @@ export interface Recipe {
   updated_at: string
 }
 
+export interface CatalogItem {
+  id: string
+  name: string
+  default_unit: string
+  shoppable: boolean
+}
+
+// name and shoppable come from catalog join, not stored on ingredients table
 export interface Ingredient {
   id: string
   recipe_id: string
+  catalog_id: string
   name: string
   quantity: number
   unit: IngredientUnit
@@ -36,6 +45,20 @@ export interface ShoppingListItem {
   recipe_id: string
   added_at: string
   servings: number
+  recipe?: Recipe
+}
+
+// name comes from catalog join, not stored on pantry table
+export interface PantryItem {
+  id: string
+  location: 'nevera' | 'congelador'
+  name: string | null
+  catalog_id: string | null
+  quantity: number
+  unit: string
+  recipe_id: string | null
+  servings: number
+  added_at: string
   recipe?: Recipe
 }
 

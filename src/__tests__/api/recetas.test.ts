@@ -92,6 +92,17 @@ describe('API /api/recetas', () => {
             }),
           }
         }
+        if (table === 'catalog') {
+          return {
+            select: vi.fn().mockReturnValue({
+              ilike: vi.fn().mockReturnValue({
+                limit: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({ data: { id: 'cat-1' }, error: null }),
+                }),
+              }),
+            }),
+          }
+        }
         return {
           insert: vi.fn().mockResolvedValue({ error: null }),
         }
@@ -143,7 +154,10 @@ describe('API /api/recetas/[id]', () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                order: vi.fn().mockResolvedValue({ data: [{ id: 'i1', name: 'Sal' }], error: null }),
+                order: vi.fn().mockResolvedValue({
+                  data: [{ id: 'i1', name: 'Sal', catalog_id: 'cat-1', catalog: { id: 'cat-1', name: 'Sal', shoppable: true }, quantity: 1, unit: 'g', order: 0, recipe_id: '1' }],
+                  error: null,
+                }),
               }),
             }),
           }

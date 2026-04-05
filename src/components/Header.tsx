@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const navLinks = [
   { href: "/", label: "Inicio" },
   { href: "/recetas", label: "Recetas" },
+  { href: "/despensa", label: "Despensa" },
   { href: "/lista-compra", label: "Lista de compra", showBadge: true },
 ];
 
@@ -40,55 +42,7 @@ export default function Header() {
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
-          <svg className="h-9 w-9" viewBox="0 0 40 40" fill="none">
-            {/* Pot body */}
-            <rect x="8" y="16" width="24" height="16" rx="4" fill="#c45d35" />
-            {/* Pot rim */}
-            <rect x="6" y="14" width="28" height="4" rx="2" fill="#a34420" />
-            {/* Left handle */}
-            <rect x="2" y="19" width="5" height="3" rx="1.5" fill="#d4a24e" />
-            {/* Right handle */}
-            <rect x="33" y="19" width="5" height="3" rx="1.5" fill="#d4a24e" />
-            {/* Steam 1 */}
-            <path
-              d="M14 12 Q14.5 8 14 5"
-              stroke="#5a7247"
-              strokeWidth="2"
-              fill="none"
-              strokeLinecap="round"
-              opacity="0.7"
-            />
-            {/* Steam 2 */}
-            <path
-              d="M20 11 Q20.5 7 20 4"
-              stroke="#5a7247"
-              strokeWidth="2"
-              fill="none"
-              strokeLinecap="round"
-              opacity="0.7"
-            />
-            {/* Steam 3 */}
-            <path
-              d="M26 12 Q26.5 8 26 5"
-              stroke="#5a7247"
-              strokeWidth="2"
-              fill="none"
-              strokeLinecap="round"
-              opacity="0.7"
-            />
-            {/* Lid knob */}
-            <circle cx="20" cy="13" r="2" fill="#d4a24e" />
-            {/* Highlight on pot */}
-            <rect
-              x="12"
-              y="20"
-              width="8"
-              height="2"
-              rx="1"
-              fill="#e87a56"
-              opacity="0.5"
-            />
-          </svg>
+          <Image src="/logo.png" alt="Recetario" width={32} height={32} />
           <span className="font-heading text-xl font-bold tracking-tight text-foreground">
             Recetario
           </span>

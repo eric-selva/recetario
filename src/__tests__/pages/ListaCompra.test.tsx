@@ -31,7 +31,10 @@ const mockShoppingList = [
 
 describe("Lista de Compra Page", () => {
   beforeEach(() => {
-    mockFetch({ "/api/lista-compra": mockShoppingList });
+    mockFetch({
+      "/api/lista-compra": mockShoppingList,
+      "/api/despensa": [],
+    });
   });
 
   it("renders page title", () => {
@@ -72,11 +75,11 @@ describe("Lista de Compra Page", () => {
     expect(removeButtons.length).toBe(3);
   });
 
-  it("shows exclusion info text", async () => {
+  it("shows pantry info text", async () => {
     render(<ListaCompraPage />);
     await waitFor(() => {
       expect(
-        screen.getByText(/Especias, salsas, aceite, agua y basicos/),
+        screen.getByText(/Las cantidades se ajustan restando/),
       ).toBeInTheDocument();
     });
   });
@@ -151,7 +154,7 @@ describe("Lista de Compra Page", () => {
   });
 
   it("shows empty state when list is empty", async () => {
-    mockFetch({ "/api/lista-compra": [] });
+    mockFetch({ "/api/lista-compra": [], "/api/despensa": [] });
     render(<ListaCompraPage />);
     await waitFor(() => {
       expect(screen.getByText("La lista esta vacia")).toBeInTheDocument();
@@ -159,7 +162,7 @@ describe("Lista de Compra Page", () => {
   });
 
   it("shows link to recipes in empty state", async () => {
-    mockFetch({ "/api/lista-compra": [] });
+    mockFetch({ "/api/lista-compra": [], "/api/despensa": [] });
     render(<ListaCompraPage />);
     await waitFor(() => {
       expect(screen.getByText("Ver recetas")).toBeInTheDocument();
@@ -167,7 +170,10 @@ describe("Lista de Compra Page", () => {
   });
 
   it("removes recipe from list on X click", async () => {
-    const fetchMock = mockFetch({ "/api/lista-compra": mockShoppingList });
+    const fetchMock = mockFetch({
+      "/api/lista-compra": mockShoppingList,
+      "/api/despensa": [],
+    });
     render(<ListaCompraPage />);
 
     await waitFor(() => {
@@ -182,6 +188,99 @@ describe("Lista de Compra Page", () => {
       expect(
         calls.some((url: string) => url.includes("/api/lista-compra?id=")),
       ).toBe(true);
+    });
+  });
+
+  it("shows servings badge on recipe pills", async () => {
+    render(<ListaCompraPage />);
+    await waitFor(() => {
+      // Both recipes have servings: 1
+      const badges = screen.getAllByText("×1");
+      expect(badges.length).toBe(2);
+    });
+  });
+});
+
+describe("Lista de Compra - Pantry subtraction", () => {
+  it("subtracts pantry quantities from needed ingredients", async () => {
+    mockFetch({
+      "/api/lista-compra": [
+        {
+          id: "sl1",
+          recipe_id: "r1",
+          added_at: "2024-01-01T00:00:00Z",
+          servings: 1,
+          recipe: { id: "r1", title: "Receta", meal_type: "comida" },
+          ingredients: [
+            { id: "i1", name: "Zanahoria", quantity: 3, unit: "unidad" },
+          ],
+        },
+      ],
+      "/api/despensa": [
+        { id: "p1", name: "Zanahoria", quantity: 1, unit: "unidad", location: "nevera" },
+      ],
+    });
+
+    render(<ListaCompraPage />);
+
+    await waitFor(() => {
+      // 3 needed - 1 in pantry = 2
+      expect(screen.getByText("2 unidad")).toBeInTheDocument();
+    });
+  });
+
+  it("shows pantry discount label", async () => {
+    mockFetch({
+      "/api/lista-compra": [
+        {
+          id: "sl1",
+          recipe_id: "r1",
+          added_at: "2024-01-01T00:00:00Z",
+          servings: 1,
+          recipe: { id: "r1", title: "Receta", meal_type: "comida" },
+          ingredients: [
+            { id: "i1", name: "Cebolla", quantity: 2, unit: "unidad" },
+          ],
+        },
+      ],
+      "/api/despensa": [
+        { id: "p1", name: "Cebolla", quantity: 1, unit: "unidad", location: "nevera" },
+      ],
+    });
+
+    render(<ListaCompraPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/en despensa/)).toBeInTheDocument();
+    });
+  });
+
+  it("hides ingredient entirely when pantry covers full quantity", async () => {
+    mockFetch({
+      "/api/lista-compra": [
+        {
+          id: "sl1",
+          recipe_id: "r1",
+          added_at: "2024-01-01T00:00:00Z",
+          servings: 1,
+          recipe: { id: "r1", title: "Receta", meal_type: "comida" },
+          ingredients: [
+            { id: "i1", name: "Zanahoria", quantity: 2, unit: "unidad" },
+            { id: "i2", name: "Cebolla", quantity: 1, unit: "unidad" },
+          ],
+        },
+      ],
+      "/api/despensa": [
+        { id: "p1", name: "Zanahoria", quantity: 5, unit: "unidad", location: "nevera" },
+      ],
+    });
+
+    render(<ListaCompraPage />);
+
+    await waitFor(() => {
+      // Cebolla should appear, zanahoria should not (pantry has more than needed)
+      expect(screen.getByText("Cebolla")).toBeInTheDocument();
+      expect(screen.queryByText("Zanahoria")).not.toBeInTheDocument();
     });
   });
 });

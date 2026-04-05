@@ -64,7 +64,7 @@ export default function SlidingFilter({ options, value, onChange }: SlidingFilte
           key={option.value}
           data-value={option.value}
           onClick={() => onChange(option.value)}
-          className={`relative z-10 rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+          className={`relative z-10 flex-1 rounded-lg px-4 py-2 text-center text-sm font-medium transition-colors duration-200 ${
             value === option.value
               ? 'text-primary'
               : 'text-muted hover:text-foreground'
