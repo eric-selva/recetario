@@ -54,7 +54,7 @@ export default function RecetasPage() {
 
     fetch(`/api/recetas?${params}`)
       .then((res) => res.json())
-      .then((data) => setRecipes(data))
+      .then((data) => setRecipes(Array.isArray(data) ? data : []))
       .finally(() => setLoading(false));
   }, [mealType, searchDebounced]);
 
