@@ -28,7 +28,7 @@ export default function Home() {
       <div className="flex min-h-screen flex-col items-center justify-center px-4">
         <Image src="/logo.png" alt="Recetario" width={90} height={90} className="mb-6" priority />
 
-        <h1 className="font-heading text-4xl font-bold tracking-tight">Recetario</h1>
+        <h1 className="font-brand text-5xl font-bold bg-gradient-to-r from-primary via-saffron to-olive bg-clip-text text-transparent">Recetario</h1>
         <p className="mt-2 text-sm text-muted">Introduce la clave para acceder</p>
 
         <form onSubmit={handleSubmit} className="mt-8 flex w-full max-w-xs flex-col gap-3">
@@ -63,7 +63,7 @@ export default function Home() {
         <Image src="/logo.png" alt="Recetario" width={140} height={140} priority />
 
         <div>
-          <h1 className="font-heading text-5xl font-bold tracking-tight sm:text-6xl">
+          <h1 className="font-brand text-6xl font-bold sm:text-7xl bg-gradient-to-r from-primary via-saffron to-olive bg-clip-text text-transparent">
             Recetario
           </h1>
           <p className="mx-auto mt-4 max-w-lg text-lg text-muted">

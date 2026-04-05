@@ -10,9 +10,9 @@ import type { Recipe } from "@/types/database";
 
 const mealTypes = [
   { value: "todas", label: "Todas" },
-  { value: "desayuno", label: "Desayuno" },
   { value: "comida", label: "Comida" },
   { value: "cena", label: "Cena" },
+  { value: "postre", label: "Postre" },
 ];
 
 const PAGE_SIZE = 10;
@@ -101,20 +101,32 @@ export default function RecetasPage() {
       .finally(() => setLoadingMore(false));
   }, [loadingMore, hasMore, offset, buildUrl]);
 
+  // Keep a ref to loadMore so the observer callback never goes stale
+  const loadMoreRef = useRef(loadMore);
+  loadMoreRef.current = loadMore;
+
   // IntersectionObserver for infinite scroll
   useEffect(() => {
     const el = sentinelRef.current;
-    if (!el) return;
+    if (!el || loading) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) loadMore();
+        if (entries[0].isIntersecting) loadMoreRef.current();
       },
       { rootMargin: "200px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [loadMore]);
+  }, [loading, hasMore]);
+
+  const isCena = mealType === "cena";
+  const accentBg = isCena ? "bg-night" : "bg-primary";
+  const accentBgLight = isCena ? "bg-night/15" : "bg-primary/15";
+  const accentText = isCena ? "text-night" : "text-primary";
+  const accentShadow = isCena ? "shadow-night/20" : "shadow-primary/20";
+  const accentHover = isCena ? "hover:bg-night/80" : "hover:bg-primary-dark";
+  const accentRing = isCena ? "focus:border-night focus:ring-night/10" : "focus:border-primary focus:ring-primary/10";
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -126,7 +138,7 @@ export default function RecetasPage() {
         </div>
         <Link
           href="/recetas/nueva"
-          className="inline-flex items-center gap-1.5 rounded-2xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-lg"
+          className={`inline-flex items-center gap-1.5 rounded-2xl px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg ${accentBg} ${accentShadow} ${accentHover}`}
         >
           + Nueva
         </Link>
@@ -141,7 +153,7 @@ export default function RecetasPage() {
             onClick={() => setViewMode("grid-3")}
             className={`rounded-lg p-2 transition-colors ${
               viewMode === "grid-3"
-                ? "bg-primary/15 text-primary"
+                ? `${accentBgLight} ${accentText}`
                 : "text-muted hover:text-foreground"
             }`}
             title="Cuadrícula 3 columnas"
@@ -170,7 +182,7 @@ export default function RecetasPage() {
             onClick={() => setViewMode("grid-2")}
             className={`rounded-lg p-2 transition-colors ${
               viewMode === "grid-2"
-                ? "bg-primary/15 text-primary"
+                ? `${accentBgLight} ${accentText}`
                 : "text-muted hover:text-foreground"
             }`}
             title="Cuadrícula 2 columnas"
@@ -226,7 +238,7 @@ export default function RecetasPage() {
             onClick={() => setViewMode("list")}
             className={`rounded-lg p-2 transition-colors ${
               viewMode === "list"
-                ? "bg-primary/15 text-primary"
+                ? `${accentBgLight} ${accentText}`
                 : "text-muted hover:text-foreground"
             }`}
             title="Lista"
@@ -268,7 +280,7 @@ export default function RecetasPage() {
             placeholder="Buscar por titulo o ingrediente..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
+            className={`w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-4 text-sm outline-none transition-colors ${accentRing}`}
           />
         </div>
       </div>
@@ -279,6 +291,7 @@ export default function RecetasPage() {
           options={mealTypes}
           value={mealType}
           onChange={setMealType}
+          colorMap={{ cena: { bg: 'bg-night/15', text: 'text-night' } }}
         />
       </div>
 
@@ -377,45 +390,44 @@ export default function RecetasPage() {
         )}
       </Skeleton>
 
-      {/* Infinite scroll sentinel + skeleton cards */}
-      {!loading && hasMore && (
-        <div ref={sentinelRef}>
-          {loadingMore &&
-            (viewMode === "list" ? (
-              <div className="mt-4 flex flex-col gap-4 animate-pulse">
-                {[...Array(3)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex overflow-hidden rounded-2xl border border-border bg-card"
-                  >
-                    <div className="h-28 w-28 shrink-0 bg-primary-light/30 sm:w-32" />
-                    <div className="flex flex-1 flex-col justify-center p-4 space-y-3">
-                      <div className="h-4 w-16 rounded-lg bg-primary-light/40" />
-                      <div className="h-5 w-3/4 rounded-lg bg-primary-light/30" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
+      {/* Infinite scroll sentinel (always mounted so ref is stable) */}
+      <div ref={sentinelRef} className="h-1" />
+
+      {/* Loading more skeleton cards */}
+      {loadingMore &&
+        (viewMode === "list" ? (
+          <div className="mt-4 flex flex-col gap-4 animate-pulse">
+            {[...Array(3)].map((_, i) => (
               <div
-                className={`mt-6 animate-pulse ${viewModeGridClass[viewMode]}`}
+                key={i}
+                className="flex overflow-hidden rounded-2xl border border-border bg-card"
               >
-                {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="overflow-hidden rounded-2xl border border-border bg-card"
-                  >
-                    <div className="aspect-4/3 bg-primary-light/30" />
-                    <div className="p-4 space-y-3">
-                      <div className="h-4 w-16 rounded-lg bg-primary-light/40" />
-                      <div className="h-5 w-3/4 rounded-lg bg-primary-light/30" />
-                    </div>
-                  </div>
-                ))}
+                <div className="h-28 w-28 shrink-0 bg-primary-light/30 sm:w-32" />
+                <div className="flex flex-1 flex-col justify-center p-4 space-y-3">
+                  <div className="h-4 w-16 rounded-lg bg-primary-light/40" />
+                  <div className="h-5 w-3/4 rounded-lg bg-primary-light/30" />
+                </div>
               </div>
             ))}
-        </div>
-      )}
+          </div>
+        ) : (
+          <div
+            className={`mt-6 animate-pulse ${viewModeGridClass[viewMode]}`}
+          >
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="overflow-hidden rounded-2xl border border-border bg-card"
+              >
+                <div className="aspect-4/3 bg-primary-light/30" />
+                <div className="p-4 space-y-3">
+                  <div className="h-4 w-16 rounded-lg bg-primary-light/40" />
+                  <div className="h-5 w-3/4 rounded-lg bg-primary-light/30" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
     </div>
   );
 }

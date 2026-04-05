@@ -534,15 +534,15 @@ function CongeladorTab() {
   }
 
   const mealTypeStyles: Record<string, string> = {
-    desayuno: "bg-saffron/15 text-saffron",
     comida: "bg-primary/10 text-primary",
-    cena: "bg-olive/10 text-olive",
+    cena: "bg-night/10 text-night",
+    postre: "bg-saffron/15 text-saffron",
   };
 
   const mealTypeLabels: Record<string, string> = {
-    desayuno: "Desayuno",
     comida: "Comida",
     cena: "Cena",
+    postre: "Postre",
   };
 
   return (

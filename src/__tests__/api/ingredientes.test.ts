@@ -15,25 +15,27 @@ describe('API /api/ingredientes', () => {
     vi.resetModules()
   })
 
-  it('returns catalog entries', async () => {
+  it('returns catalog entries (paginated)', async () => {
     const catalog = [
       { id: 'c1', name: 'Zanahoria', default_unit: 'unidad', shoppable: true },
       { id: 'c2', name: 'Cebolla', default_unit: 'unidad', shoppable: true },
     ]
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue({ data: catalog, error: null }),
+        order: vi.fn().mockReturnValue({
+          range: vi.fn().mockResolvedValue({ data: catalog, error: null, count: 2 }),
+        }),
       }),
     })
 
     const { GET } = await import('@/app/api/ingredientes/route')
     const request = new NextRequest('http://localhost/api/ingredientes')
     const response = await GET(request)
-    const data = await response.json()
+    const json = await response.json()
 
-    expect(data).toHaveLength(2)
-    expect(data[0].name).toBe('Zanahoria')
-    expect(data[0].unit).toBe('unidad')
+    expect(json.data).toHaveLength(2)
+    expect(json.data[0].name).toBe('Zanahoria')
+    expect(json.total).toBe(2)
   })
 
   it('filters by search term via ilike', async () => {
@@ -43,10 +45,9 @@ describe('API /api/ingredientes', () => {
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
         order: vi.fn().mockReturnValue({
-          ilike: vi.fn().mockResolvedValue({ data: catalog, error: null }),
-        }),
-        ilike: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: catalog, error: null }),
+          range: vi.fn().mockReturnValue({
+            ilike: vi.fn().mockResolvedValue({ data: catalog, error: null, count: 1 }),
+          }),
         }),
       }),
     })
@@ -54,16 +55,18 @@ describe('API /api/ingredientes', () => {
     const { GET } = await import('@/app/api/ingredientes/route')
     const request = new NextRequest('http://localhost/api/ingredientes?search=ceb')
     const response = await GET(request)
-    const data = await response.json()
+    const json = await response.json()
 
-    expect(data).toHaveLength(1)
-    expect(data[0].name).toBe('Cebolla')
+    expect(json.data).toHaveLength(1)
+    expect(json.data[0].name).toBe('Cebolla')
   })
 
   it('returns 500 on error', async () => {
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue({ data: null, error: { message: 'DB error' } }),
+        order: vi.fn().mockReturnValue({
+          range: vi.fn().mockResolvedValue({ data: null, error: { message: 'DB error' }, count: null }),
+        }),
       }),
     })
 

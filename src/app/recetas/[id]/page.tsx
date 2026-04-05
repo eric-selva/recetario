@@ -9,15 +9,15 @@ import Toast from "@/components/Toast";
 import type { RecipeWithDetails } from "@/types/database";
 
 const mealTypeLabels: Record<string, string> = {
-  desayuno: "Desayuno",
   comida: "Comida",
   cena: "Cena",
+  postre: "Postre",
 };
 
 const mealTypeStyles: Record<string, string> = {
-  desayuno: "bg-saffron/15 text-saffron",
   comida: "bg-primary/10 text-primary",
-  cena: "bg-olive/10 text-olive",
+  cena: "bg-night/10 text-night",
+  postre: "bg-saffron/15 text-saffron",
 };
 
 export default function RecetaDetailPage() {

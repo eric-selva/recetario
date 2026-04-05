@@ -43,7 +43,7 @@ export default function Header() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
           <Image src="/logo.png" alt="Recetario" width={32} height={32} />
-          <span className="font-heading text-xl font-bold tracking-tight text-foreground">
+          <span className="font-brand text-2xl font-bold bg-gradient-to-r from-primary via-saffron to-olive bg-clip-text text-transparent">
             Recetario
           </span>
         </Link>

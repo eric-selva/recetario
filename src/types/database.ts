@@ -1,4 +1,4 @@
-export type MealType = 'desayuno' | 'comida' | 'cena'
+export type MealType = 'comida' | 'cena' | 'postre'
 
 export type IngredientUnit = 'g' | 'kg' | 'ml' | 'l' | 'unidad' | 'cucharada' | 'cucharadita' | 'pizca' | 'al gusto'
 

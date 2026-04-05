@@ -1,7 +1,5 @@
 'use client'
 
-import { useRef, useState, useLayoutEffect, useEffect } from 'react'
-
 interface FilterOption {
   value: string
   label: string
@@ -11,62 +9,34 @@ interface SlidingFilterProps {
   options: FilterOption[]
   value: string
   onChange: (value: string) => void
+  /** Map option value → { bg, text } Tailwind classes. Falls back to primary. */
+  colorMap?: Record<string, { bg: string; text: string }>
 }
 
-export default function SlidingFilter({ options, value, onChange }: SlidingFilterProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [indicator, setIndicator] = useState({ left: 0, width: 0 })
-  const [ready, setReady] = useState(false)
-
-  function updateIndicator() {
-    const container = containerRef.current
-    if (!container) return
-    const activeBtn = container.querySelector<HTMLButtonElement>(`[data-value="${value}"]`)
-    if (!activeBtn) return
-    const containerRect = container.getBoundingClientRect()
-    const btnRect = activeBtn.getBoundingClientRect()
-    setIndicator({
-      left: btnRect.left - containerRect.left,
-      width: btnRect.width,
-    })
-    setReady(true)
-  }
-
-  // useLayoutEffect for initial + value changes (avoids flash)
-  useLayoutEffect(() => {
-    updateIndicator()
-  }, [value])
-
-  // Also update on resize
-  useEffect(() => {
-    const handleResize = () => updateIndicator()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [value])
+export default function SlidingFilter({ options, value, onChange, colorMap }: SlidingFilterProps) {
+  const count = options.length
+  const activeIndex = options.findIndex((o) => o.value === value)
+  const widthPercent = 100 / count
 
   return (
-    <div
-      ref={containerRef}
-      className="relative flex rounded-xl border border-border bg-card p-1"
-    >
-      {/* Sliding background */}
+    <div className="relative flex rounded-xl border border-border bg-card p-1">
+      {/* Sliding background — positioned by percentage so it never desync */}
       <div
-        className="absolute top-1 bottom-1 rounded-lg bg-primary/15"
+        className={`absolute top-1 bottom-1 rounded-lg ${colorMap?.[value]?.bg ?? 'bg-primary/15'}`}
         style={{
-          left: indicator.left,
-          width: indicator.width,
-          transition: ready ? 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
+          left: `calc(${activeIndex * widthPercent}% + 4px)`,
+          width: `calc(${widthPercent}% - 8px)`,
+          transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       />
 
       {options.map((option) => (
         <button
           key={option.value}
-          data-value={option.value}
           onClick={() => onChange(option.value)}
           className={`relative z-10 flex-1 rounded-lg px-4 py-2 text-center text-sm font-medium transition-colors duration-200 ${
             value === option.value
-              ? 'text-primary'
+              ? (colorMap?.[value]?.text ?? 'text-primary')
               : 'text-muted hover:text-foreground'
           }`}
         >

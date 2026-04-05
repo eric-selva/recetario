@@ -47,27 +47,34 @@ describe('API /api/recetas', () => {
   })
 
   describe('GET', () => {
-    it('returns recipes list', async () => {
+    it('returns recipes list (paginated)', async () => {
       const mockRecipes = [{ id: '1', title: 'Test' }]
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: mockRecipes, error: null }),
-          eq: vi.fn().mockResolvedValue({ data: mockRecipes, error: null }),
+          order: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              range: vi.fn().mockResolvedValue({ data: mockRecipes, error: null, count: 1 }),
+            }),
+            range: vi.fn().mockResolvedValue({ data: mockRecipes, error: null, count: 1 }),
+          }),
         }),
       })
 
       const { GET } = await import('@/app/api/recetas/route')
       const request = new NextRequest('http://localhost/api/recetas')
       const response = await GET(request)
-      const data = await response.json()
+      const json = await response.json()
 
-      expect(data).toEqual(mockRecipes)
+      expect(json.data).toEqual(mockRecipes)
+      expect(json.total).toBe(1)
     })
 
     it('returns 500 on error', async () => {
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: null, error: { message: 'DB error' } }),
+          order: vi.fn().mockReturnValue({
+            range: vi.fn().mockResolvedValue({ data: null, error: { message: 'DB error' }, count: null }),
+          }),
         }),
       })
 

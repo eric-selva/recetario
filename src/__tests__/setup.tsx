@@ -1,5 +1,13 @@
 import '@testing-library/jest-dom/vitest'
 
+// Mock IntersectionObserver (not available in jsdom)
+class MockIntersectionObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver
+
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   useRouter: () => ({

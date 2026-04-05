@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import DespensaPage from '@/app/despensa/page'
 import { mockFetch } from '../setup'
+import { invalidateCache } from '@/lib/fetchCache'
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/despensa',
@@ -11,6 +12,7 @@ vi.mock('next/navigation', () => ({
 
 describe('Despensa Page', () => {
   beforeEach(() => {
+    invalidateCache()
     mockFetch({
       '/api/despensa': [],
       '/api/ingredientes': [],
@@ -110,10 +112,13 @@ describe('Despensa Page', () => {
   it('shows search suggestions for ingredients', async () => {
     mockFetch({
       '/api/despensa': [],
-      '/api/ingredientes': [
-        { name: 'Zanahoria', unit: 'unidad' },
-        { name: 'Cebolla', unit: 'unidad' },
-      ],
+      '/api/ingredientes': {
+        data: [
+          { name: 'Zanahoria', unit: 'unidad' },
+          { name: 'Cebolla', unit: 'unidad' },
+        ],
+        total: 2,
+      },
     })
 
     render(<DespensaPage />)

@@ -60,8 +60,8 @@ describe('RecipeCard', () => {
   })
 
   it('renders all meal type variants correctly', () => {
-    const { rerender } = render(<RecipeCard recipe={{ ...mockRecipe, meal_type: 'desayuno' }} />)
-    expect(screen.getByText('Desayuno')).toBeInTheDocument()
+    const { rerender } = render(<RecipeCard recipe={{ ...mockRecipe, meal_type: 'postre' }} />)
+    expect(screen.getByText('Postre')).toBeInTheDocument()
 
     rerender(<RecipeCard recipe={{ ...mockRecipe, meal_type: 'cena' }} />)
     expect(screen.getByText('Cena')).toBeInTheDocument()

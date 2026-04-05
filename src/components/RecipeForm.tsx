@@ -178,9 +178,9 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
               onChange={(e) => setMealType(e.target.value as MealType)}
               className={inputClass}
             >
-              <option value="desayuno">Desayuno</option>
               <option value="comida">Comida</option>
               <option value="cena">Cena</option>
+              <option value="postre">Postre</option>
             </select>
           </div>
           <div>

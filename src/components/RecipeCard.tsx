@@ -6,29 +6,29 @@ import Image from "next/image";
 import type { Recipe } from "@/types/database";
 
 const mealTypeLabels: Record<string, string> = {
-  desayuno: "Desayuno",
   comida: "Comida",
   cena: "Cena",
+  postre: "Postre",
 };
 
 const mealTypeStyles: Record<
   string,
   { bg: string; text: string; icon: string }
 > = {
-  desayuno: {
-    bg: "bg-saffron/15",
-    text: "text-saffron",
-    icon: "M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41M12 8a4 4 0 100 8 4 4 0 000-8z",
-  },
   comida: {
     bg: "bg-primary/10",
     text: "text-primary",
     icon: "M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41M12 8a4 4 0 100 8 4 4 0 000-8z",
   },
   cena: {
-    bg: "bg-olive/10",
-    text: "text-olive",
+    bg: "bg-night/10",
+    text: "text-night",
     icon: "M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z",
+  },
+  postre: {
+    bg: "bg-saffron/15",
+    text: "text-saffron",
+    icon: "M12 8a4 4 0 100 8 4 4 0 000-8zM12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41",
   },
 };
 

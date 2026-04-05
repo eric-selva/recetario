@@ -34,7 +34,7 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <footer className="border-t border-border bg-card/50 py-6 text-center text-xs text-muted">
             <div className="divider-herbs mb-4" />
-            Recetario &mdash; Cocina con amor
+            <span className="font-brand text-sm font-semibold bg-gradient-to-r from-primary via-saffron to-olive bg-clip-text text-transparent">Recetario</span> &mdash; Cocina con amor
           </footer>
         </AuthGate>
       </body>
