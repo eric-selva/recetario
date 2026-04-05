@@ -161,11 +161,11 @@ describe("Lista de Compra Page", () => {
     });
   });
 
-  it("shows link to recipes in empty state", async () => {
+  it("shows search input in empty state", async () => {
     mockFetch({ "/api/lista-compra": [], "/api/despensa": [] });
     render(<ListaCompraPage />);
     await waitFor(() => {
-      expect(screen.getByText("Ver recetas")).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/Añadir receta o ingrediente/)).toBeInTheDocument();
     });
   });
 
