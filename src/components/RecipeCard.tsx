@@ -197,11 +197,11 @@ export default function RecipeCard({
                 </span>
               )}
             </div>
-            <h3 className="line-clamp-1 font-heading text-base font-semibold leading-snug group-hover:text-primary sm:text-lg">
+            <h3 className="line-clamp-2 font-heading text-base font-semibold leading-tight group-hover:text-primary sm:line-clamp-1 sm:text-lg sm:leading-snug">
               {recipe.title}
             </h3>
             {recipe.description && (
-              <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-muted">
+              <p className="mt-0.5 line-clamp-1 text-xs leading-snug text-muted sm:line-clamp-2">
                 {recipe.description}
               </p>
             )}
@@ -219,9 +219,13 @@ export default function RecipeCard({
   }
 
   return (
-    <div className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/20 hover:shadow-md ${compact ? "h-52 sm:h-[28rem]" : "h-[24rem] sm:h-[28rem]"}`}>
+    <div
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/20 hover:shadow-md ${compact ? "h-52 sm:h-[28rem]" : "h-[24rem] sm:h-[28rem]"}`}
+    >
       <Link href={`/recetas/${recipe.id}`} className="flex h-full flex-col">
-        <div className={`relative shrink-0 overflow-hidden bg-primary-light/30 ${compact ? "h-28 sm:h-64" : "h-52 sm:h-72"}`}>
+        <div
+          className={`relative shrink-0 overflow-hidden bg-primary-light/30 ${compact ? "h-28 sm:h-64" : "h-52 sm:h-72"}`}
+        >
           {recipe.image_url ? (
             <Image
               src={recipe.image_url}
@@ -253,8 +257,12 @@ export default function RecipeCard({
             <div className="absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-black/20 to-transparent" />
           )}
         </div>
-        <div className={`flex min-h-0 flex-1 flex-col ${compact ? "p-2 sm:p-4" : "p-4"}`}>
-          <div className={`flex items-center gap-1.5 ${compact ? "mb-0.5 sm:mb-2" : "mb-2"}`}>
+        <div
+          className={`flex min-h-0 flex-1 flex-col ${compact ? "p-2 sm:p-4" : "p-4"}`}
+        >
+          <div
+            className={`flex items-center gap-1.5 ${compact ? "mb-0.5 sm:mb-2" : "mb-2"}`}
+          >
             <span
               className={`inline-flex items-center gap-0.5 font-medium ${style.bg} ${style.text} ${compact ? "rounded px-1.5 py-0.5 text-[10px] sm:gap-1 sm:rounded-lg sm:px-2.5 sm:py-1 sm:text-xs" : "gap-1 rounded-lg px-2.5 py-1 text-xs"}`}
             >
@@ -274,7 +282,9 @@ export default function RecipeCard({
               {mealTypeLabels[recipe.meal_type]}
             </span>
             {recipe.prep_time > 0 && (
-              <span className={`flex items-center text-muted ${compact ? "gap-0.5 text-[10px] sm:gap-1 sm:text-xs" : "gap-1 text-xs"}`}>
+              <span
+                className={`flex items-center text-muted ${compact ? "gap-0.5 text-[10px] sm:gap-1 sm:text-xs" : "gap-1 text-xs"}`}
+              >
                 <svg
                   className={compact ? "h-2.5 w-2.5 sm:h-3 sm:w-3" : "h-3 w-3"}
                   fill="none"
@@ -292,14 +302,22 @@ export default function RecipeCard({
               </span>
             )}
             <span className="ml-auto">
-              <AddToListButton recipeId={recipe.id} onAdded={onAddedToList} compact />
+              <AddToListButton
+                recipeId={recipe.id}
+                onAdded={onAddedToList}
+                compact
+              />
             </span>
           </div>
-          <h3 className={`line-clamp-2 font-heading font-semibold leading-tight group-hover:text-primary ${compact ? "text-sm sm:text-lg" : "text-lg sm:text-xl"}`}>
+          <h3
+            className={`line-clamp-2 font-heading font-semibold leading-tight group-hover:text-primary ${compact ? "text-sm sm:text-lg" : "text-lg sm:text-xl"}`}
+          >
             {recipe.title}
           </h3>
           {recipe.description && (
-            <p className={`mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted ${compact ? "hidden sm:block" : ""}`}>
+            <p
+              className={`mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted ${compact ? "hidden sm:block" : ""}`}
+            >
               {recipe.description}
             </p>
           )}
