@@ -90,10 +90,8 @@ describe("Lista de Compra Page", () => {
     fireEvent.click(espaguetisRow);
 
     await waitFor(() => {
-      const label = screen
-        .getByText("Espaguetis")
-        .closest('span[class*="flex-1"]');
-      expect(label?.className).toContain("line-through");
+      const nameSpan = screen.getByText("Espaguetis");
+      expect(nameSpan.className).toContain("line-through");
     });
   });
 

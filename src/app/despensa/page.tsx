@@ -5,8 +5,8 @@ import SlidingFilter from "@/components/SlidingFilter";
 import { cachedFetch, invalidateCache } from "@/lib/fetchCache";
 
 const tabs = [
-  { value: "nevera", label: "Despensa" },
   { value: "congelador", label: "Tuppers" },
+  { value: "nevera", label: "Despensa" },
 ];
 
 const PAGE_SIZE = 10;
@@ -57,11 +57,16 @@ interface TupperExtra {
 // ----- Component -----
 
 export default function DespensaPage() {
-  const [tab, setTab] = useState("nevera");
+  const [tab, setTab] = useState("congelador");
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="font-heading text-3xl font-bold">Despensa</h1>
+      <h1 className="flex items-center gap-2.5 font-heading text-3xl font-bold">
+        <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+        Despensa
+      </h1>
       <p className="mt-1 text-sm text-muted">
         Controla lo que tienes en despensa y tuppers
       </p>

@@ -45,7 +45,12 @@ export default function EditarRecetaPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="font-heading text-3xl font-bold">Editar receta</h1>
+      <h1 className="flex items-center gap-2.5 font-heading text-3xl font-bold">
+        <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+        </svg>
+        Editar receta
+      </h1>
       <p className="mt-2 text-muted">Modifica los datos de la receta.</p>
       <div className="divider-herbs my-6" />
       <div className="mt-2">

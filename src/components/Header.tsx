@@ -6,10 +6,34 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const navLinks = [
-  { href: "/", label: "Inicio" },
-  { href: "/recetas", label: "Recetas" },
-  { href: "/despensa", label: "Despensa" },
-  { href: "/lista-compra", label: "Lista de compra", showBadge: true },
+  {
+    href: "/recetas",
+    label: "Recetas",
+    icon: (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg>
+    ),
+  },
+  {
+    href: "/despensa",
+    label: "Despensa",
+    icon: (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+    ),
+  },
+  {
+    href: "/lista-compra",
+    label: "Lista",
+    showBadge: true,
+    icon: (
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+      </svg>
+    ),
+  },
 ];
 
 export default function Header() {
@@ -54,12 +78,13 @@ export default function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className={`relative rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+              className={`relative flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
                 isActive(link.href)
                   ? "bg-primary text-white shadow-sm"
                   : "text-muted hover:bg-primary-light hover:text-primary"
               }`}
             >
+              {link.icon}
               {link.label}
               {link.showBadge && cartCount > 0 && (
                 <span
@@ -114,13 +139,14 @@ export default function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all ${
+                className={`flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-medium transition-all ${
                   isActive(link.href)
                     ? "bg-primary text-white"
                     : "text-muted hover:bg-primary-light hover:text-primary"
                 }`}
               >
-                {link.label}
+                {link.icon}
+                <span className="flex-1">{link.label}</span>
                 {link.showBadge && cartCount > 0 && (
                   <span
                     className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${

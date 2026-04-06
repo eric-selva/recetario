@@ -20,9 +20,9 @@ describe('Header', () => {
 
   it('renders all navigation links', () => {
     render(<Header />)
-    expect(screen.getAllByText('Inicio').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Recetas').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Lista de compra').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Despensa').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Lista').length).toBeGreaterThan(0)
   })
 
   it('toggles mobile menu on hamburger click', () => {

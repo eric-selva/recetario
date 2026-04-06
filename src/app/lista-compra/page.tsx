@@ -404,7 +404,12 @@ export default function ListaCompraPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-8">
-        <h1 className="font-heading text-3xl font-bold">Lista de la compra</h1>
+        <h1 className="flex items-center gap-2.5 font-heading text-3xl font-bold">
+            <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            Lista de la compra
+          </h1>
         <Skeleton
           name="shopping-list"
           loading={true}
@@ -432,7 +437,10 @@ export default function ListaCompraPage() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       {/* Header */}
       <div>
-        <h1 className="font-heading text-3xl font-bold">
+        <h1 className="flex items-center gap-2.5 font-heading text-3xl font-bold">
+          <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
           Lista de la compra
         </h1>
       </div>
@@ -588,14 +596,14 @@ export default function ListaCompraPage() {
             {checkedCount > 0 && (
               <button
                 onClick={removeChecked}
-                className="text-sm font-semibold text-olive hover:text-olive/80 transition-colors"
+                className="text-xs font-medium text-olive hover:text-olive/80 transition-colors"
               >
                 Quitar ({checkedCount})
               </button>
             )}
             <button
               onClick={clearAll}
-              className="text-sm text-red-600 hover:text-red-700 transition-colors"
+              className="text-xs font-medium text-red-500 hover:text-red-600 transition-colors"
             >
               Vaciar lista
             </button>
@@ -750,16 +758,16 @@ export default function ListaCompraPage() {
                     {/* Ingredient info */}
                     <span
                       onClick={() => toggleCheck(ing.key)}
-                      className={`flex-1 cursor-pointer ${checked.has(ing.key) ? "text-muted line-through" : ""}`}
+                      className="flex-1 cursor-pointer flex items-center gap-2"
                     >
-                      <span className="font-medium capitalize">{ing.name}</span>
+                      <span className={`font-medium capitalize ${checked.has(ing.key) ? "text-muted line-through" : ""}`}>{ing.name}</span>
                       {ing.manual && (
-                        <span className="ml-2 text-[10px] text-saffron">
+                        <span className="text-[10px] text-saffron">
                           manual
                         </span>
                       )}
                       {ing.pantryDiscount > 0 && (
-                        <span className="ml-2 text-[10px] text-olive">
+                        <span className="text-[10px] text-olive">
                           −{formatQuantity(ing.pantryDiscount)} en despensa
                         </span>
                       )}

@@ -17,6 +17,7 @@ describe('Despensa Page', () => {
       '/api/despensa': [],
       '/api/ingredientes': [],
       '/api/recetas': [],
+      '/api/despensa/tupper-extras': [],
     })
   })
 
@@ -36,33 +37,33 @@ describe('Despensa Page', () => {
     expect(screen.getByText('Tuppers')).toBeInTheDocument()
   })
 
-  it('shows ingredient search on despensa tab', () => {
+  it('shows recipe search on tuppers tab (default)', () => {
     render(<DespensaPage />)
-    expect(screen.getByPlaceholderText(/Buscar ingrediente/)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Buscar receta/)).toBeInTheDocument()
+  })
+
+  it('shows empty state for tuppers (default)', async () => {
+    render(<DespensaPage />)
+    await waitFor(() => {
+      expect(screen.getByText(/No hay tuppers/)).toBeInTheDocument()
+    })
+  })
+
+  it('switches to despensa tab', async () => {
+    render(<DespensaPage />)
+    fireEvent.click(screen.getByText('Despensa', { selector: 'button' }))
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/Buscar ingrediente/)).toBeInTheDocument()
+    })
   })
 
   it('shows empty state for despensa', async () => {
     render(<DespensaPage />)
+    fireEvent.click(screen.getByText('Despensa', { selector: 'button' }))
+
     await waitFor(() => {
       expect(screen.getByText(/La despensa esta vacia/)).toBeInTheDocument()
-    })
-  })
-
-  it('switches to tuppers tab', async () => {
-    render(<DespensaPage />)
-    fireEvent.click(screen.getByText('Tuppers'))
-
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText(/Buscar receta/)).toBeInTheDocument()
-    })
-  })
-
-  it('shows empty state for tuppers', async () => {
-    render(<DespensaPage />)
-    fireEvent.click(screen.getByText('Tuppers'))
-
-    await waitFor(() => {
-      expect(screen.getByText(/No hay tuppers/)).toBeInTheDocument()
     })
   })
 
@@ -75,11 +76,11 @@ describe('Despensa Page', () => {
     })
 
     render(<DespensaPage />)
+    fireEvent.click(screen.getByText('Despensa', { selector: 'button' }))
 
     await waitFor(() => {
       expect(screen.getByText('Zanahoria')).toBeInTheDocument()
       expect(screen.getByText('2')).toBeInTheDocument()
-      // Quantity buttons
       expect(screen.getByText('−')).toBeInTheDocument()
       expect(screen.getByText('+')).toBeInTheDocument()
     })
@@ -102,7 +103,6 @@ describe('Despensa Page', () => {
     })
 
     render(<DespensaPage />)
-    fireEvent.click(screen.getByText('Tuppers'))
 
     await waitFor(() => {
       expect(screen.getByText('Pollo asado')).toBeInTheDocument()
@@ -123,6 +123,7 @@ describe('Despensa Page', () => {
     })
 
     render(<DespensaPage />)
+    fireEvent.click(screen.getByText('Despensa', { selector: 'button' }))
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/Buscar ingrediente/)).toBeInTheDocument()
@@ -147,6 +148,7 @@ describe('Despensa Page', () => {
     })
 
     render(<DespensaPage />)
+    fireEvent.click(screen.getByText('Despensa', { selector: 'button' }))
 
     await waitFor(() => {
       expect(screen.getByText('2 ingredientes')).toBeInTheDocument()
@@ -162,6 +164,7 @@ describe('Despensa Page', () => {
     })
 
     render(<DespensaPage />)
+    fireEvent.click(screen.getByText('Despensa', { selector: 'button' }))
 
     await waitFor(() => {
       expect(screen.getByText('Vaciar despensa')).toBeInTheDocument()
