@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, type ReactNode } from "react";
 import SlidingFilter from "@/components/SlidingFilter";
 import { cachedFetch, invalidateCache } from "@/lib/fetchCache";
 
@@ -357,50 +357,45 @@ function NeveraTab() {
               Vaciar despensa
             </button>
           </div>
-          <ul className="mt-3 space-y-2">
+          {/* Shelves — items wrap naturally, shelf plank under each row */}
+          <ShelfGrid>
             {adding && (
-              <li className="flex animate-pulse items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-sm">
-                <div className="h-4 w-2/5 rounded-lg bg-primary-light/35" />
-                <div className="ml-auto h-4 w-16 rounded-lg bg-primary-light/25" />
-              </li>
+              <div className="flex animate-pulse items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5 shadow-sm">
+                <div className="h-3 w-16 rounded bg-primary-light/25" />
+                <div className="ml-auto h-3 w-10 rounded bg-primary-light/20" />
+              </div>
             )}
             {items.map((item) => (
-              <li
+              <div
                 key={item.id}
-                className={`flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-sm transition-opacity ${
+                className={`flex items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5 shadow-sm transition-opacity ${
                   removingId === item.id ? "animate-pulse opacity-40" : ""
                 }`}
               >
-                <span className="flex-1 text-sm font-medium capitalize">
+                <span className="truncate text-xs font-bold capitalize">
                   {item.name}
                 </span>
-
-                {/* Quantity selector */}
-                <div className="flex shrink-0 items-center gap-1.5">
+                <div className="flex shrink-0 items-center gap-0.5">
                   <button
-                    onClick={() =>
-                      updateQuantity(item.id, item.quantity - 1)
-                    }
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light"
+                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                    className="flex h-5 w-5 items-center justify-center rounded border border-border text-[10px] font-bold transition-colors hover:bg-primary-light"
                   >
                     −
                   </button>
-                  <span className="w-5 text-center text-sm font-semibold">
+                  <span className="w-4 text-center text-xs font-semibold">
                     {item.quantity}
                   </span>
                   <button
-                    onClick={() =>
-                      updateQuantity(item.id, Math.min(20, item.quantity + 1))
-                    }
+                    onClick={() => updateQuantity(item.id, Math.min(20, item.quantity + 1))}
                     disabled={item.quantity >= 20}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light disabled:opacity-30"
+                    className="flex h-5 w-5 items-center justify-center rounded border border-border text-[10px] font-bold transition-colors hover:bg-primary-light disabled:opacity-30"
                   >
                     +
                   </button>
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </ShelfGrid>
         </>
       )}
     </>
@@ -587,6 +582,12 @@ function CongeladorTab() {
     postre: "Postre",
   };
 
+  const tupperLidColors: Record<string, string> = {
+    comida: "bg-primary/30",
+    cena: "bg-night/30",
+    postre: "bg-saffron/30",
+  };
+
   const totalItems = items.length + extras.length;
 
   return (
@@ -748,101 +749,121 @@ function CongeladorTab() {
           </div>
           <ul className="mt-3 space-y-2">
             {adding && (
-              <li className="flex animate-pulse items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-sm">
-                <div className="h-4 w-12 rounded bg-primary-light/40" />
-                <div className="h-4 w-2/5 rounded-lg bg-primary-light/30" />
-                <div className="ml-auto h-4 w-14 rounded-lg bg-primary-light/25" />
+              <li className="animate-pulse overflow-hidden rounded-2xl border border-border shadow-sm">
+                <div className="h-2.5 bg-primary-light/40" />
+                <div className="flex items-center gap-3 bg-card px-4 py-3">
+                  <div className="h-4 w-12 rounded bg-primary-light/40" />
+                  <div className="h-4 w-2/5 rounded-lg bg-primary-light/30" />
+                  <div className="ml-auto h-4 w-14 rounded-lg bg-primary-light/25" />
+                </div>
               </li>
             )}
             {/* Recipe-based items */}
-            {items.map((item) => (
-              <li
-                key={item.id}
-                className={`flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-sm transition-opacity ${
-                  removingId === item.id ? "animate-pulse opacity-40" : ""
-                }`}
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    {item.recipe && (
-                      <span
-                        className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${mealTypeStyles[item.recipe.meal_type] || ""}`}
-                      >
-                        {mealTypeLabels[item.recipe.meal_type] || ""}
-                      </span>
-                    )}
-                    <p className="truncate text-sm font-medium">
-                      {item.recipe?.title ?? "Receta"}
-                    </p>
+            {items.map((item) => {
+              const lidColor = tupperLidColors[item.recipe?.meal_type || "comida"] || tupperLidColors.comida;
+              return (
+                <li
+                  key={item.id}
+                  className={`overflow-hidden rounded-2xl border border-border shadow-sm transition-opacity ${
+                    removingId === item.id ? "animate-pulse opacity-40" : ""
+                  }`}
+                >
+                  {/* Lid */}
+                  <div className={`h-2.5 ${lidColor}`}>
+                    <div className="mx-auto flex h-full items-center justify-center"><div className="h-0.5 w-12 rounded-full bg-white/40" /></div>
                   </div>
-                </div>
+                  {/* Body */}
+                  <div className="flex items-center gap-3 bg-card px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        {item.recipe && (
+                          <span
+                            className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${mealTypeStyles[item.recipe.meal_type] || ""}`}
+                          >
+                            {mealTypeLabels[item.recipe.meal_type] || ""}
+                          </span>
+                        )}
+                        <p className="truncate text-sm font-medium">
+                          {item.recipe?.title ?? "Receta"}
+                        </p>
+                      </div>
+                    </div>
 
-                {/* Servings selector */}
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <button
-                    onClick={() =>
-                      updateServings(item.id, item.servings - 1)
-                    }
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light"
-                  >
-                    −
-                  </button>
-                  <span className="w-5 text-center text-sm font-semibold">
-                    {item.servings}
-                  </span>
-                  <button
-                    onClick={() =>
-                      updateServings(item.id, Math.min(20, item.servings + 1))
-                    }
-                    disabled={item.servings >= 20}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light disabled:opacity-30"
-                  >
-                    +
-                  </button>
-                </div>
-              </li>
-            ))}
+                    {/* Servings selector */}
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button
+                        onClick={() =>
+                          updateServings(item.id, item.servings - 1)
+                        }
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light"
+                      >
+                        −
+                      </button>
+                      <span className="w-5 text-center text-sm font-semibold">
+                        {item.servings}
+                      </span>
+                      <button
+                        onClick={() =>
+                          updateServings(item.id, Math.min(20, item.servings + 1))
+                        }
+                        disabled={item.servings >= 20}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light disabled:opacity-30"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
             {/* Custom tupper extras */}
             {extras.map((extra) => (
               <li
                 key={extra.id}
-                className={`flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-sm transition-opacity ${
+                className={`overflow-hidden rounded-2xl border border-border shadow-sm transition-opacity ${
                   removingId === extra.id ? "animate-pulse opacity-40" : ""
                 }`}
               >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium bg-saffron/15 text-saffron">
-                      Manual
-                    </span>
-                    <p className="truncate text-sm font-medium capitalize">
-                      {extra.name}
-                    </p>
-                  </div>
+                {/* Lid */}
+                <div className="h-2.5 bg-saffron/40">
+                  <div className="mx-auto flex h-full items-center justify-center"><div className="h-0.5 w-12 rounded-full bg-white/40" /></div>
                 </div>
+                {/* Body */}
+                <div className="flex items-center gap-3 bg-card px-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium bg-saffron/15 text-saffron">
+                        Manual
+                      </span>
+                      <p className="truncate text-sm font-medium capitalize">
+                        {extra.name}
+                      </p>
+                    </div>
+                  </div>
 
-                {/* Quantity selector */}
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <button
-                    onClick={() =>
-                      updateExtraQuantity(extra.id, extra.quantity - 1)
-                    }
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light"
-                  >
-                    −
-                  </button>
-                  <span className="w-5 text-center text-sm font-semibold">
-                    {extra.quantity}
-                  </span>
-                  <button
-                    onClick={() =>
-                      updateExtraQuantity(extra.id, Math.min(20, extra.quantity + 1))
-                    }
-                    disabled={extra.quantity >= 20}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light disabled:opacity-30"
-                  >
-                    +
-                  </button>
+                  {/* Quantity selector */}
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <button
+                      onClick={() =>
+                        updateExtraQuantity(extra.id, extra.quantity - 1)
+                      }
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light"
+                    >
+                      −
+                    </button>
+                    <span className="w-5 text-center text-sm font-semibold">
+                      {extra.quantity}
+                    </span>
+                    <button
+                      onClick={() =>
+                        updateExtraQuantity(extra.id, Math.min(20, extra.quantity + 1))
+                      }
+                      disabled={extra.quantity >= 20}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light disabled:opacity-30"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </li>
             ))}
@@ -850,5 +871,64 @@ function CongeladorTab() {
         </>
       )}
     </>
+  );
+}
+
+// ==================== SHELF GRID ====================
+
+function ShelfGrid({ children }: { children: ReactNode }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [shelfYs, setShelfYs] = useState<number[]>([]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    function measure() {
+      const container = containerRef.current;
+      if (!container) return;
+      const kids = Array.from(container.children).filter(
+        (c) => !(c as HTMLElement).dataset.shelf,
+      );
+      if (kids.length === 0) { setShelfYs([]); return; }
+
+      const containerTop = container.getBoundingClientRect().top;
+      const rowBottoms: number[] = [];
+      let currentRowBottom = 0;
+
+      for (const child of kids) {
+        const rect = child.getBoundingClientRect();
+        const bottom = rect.bottom - containerTop;
+        if (bottom > currentRowBottom + 2) {
+          if (currentRowBottom > 0) rowBottoms.push(currentRowBottom);
+          currentRowBottom = bottom;
+        } else {
+          currentRowBottom = Math.max(currentRowBottom, bottom);
+        }
+      }
+      if (currentRowBottom > 0) rowBottoms.push(currentRowBottom);
+      setShelfYs(rowBottoms);
+    }
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [children]);
+
+  return (
+    <div ref={containerRef} className="relative mt-3 flex flex-wrap items-end gap-2 px-1 pb-3">
+      {children}
+      {shelfYs.map((y, i) => (
+        <div
+          key={i}
+          data-shelf="true"
+          className="pointer-events-none absolute left-0 right-0"
+          style={{ top: y + 4 }}
+        >
+          <div className="h-1 rounded-b bg-gradient-to-b from-amber-800/20 to-amber-900/10 shadow-[0_1px_2px_rgba(120,80,40,0.12)]" />
+        </div>
+      ))}
+    </div>
   );
 }

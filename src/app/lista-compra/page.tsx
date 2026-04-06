@@ -715,138 +715,127 @@ export default function ListaCompraPage() {
             </section>
           )}
 
-          {/* Merged ingredient list */}
+          {/* Merged ingredient list — notebook style */}
           <section className="mt-4">
-            <ul
-              className={`mt-4 space-y-2 transition-opacity ${mutating ? "pointer-events-none opacity-50" : ""}`}
-            >
-              {mergedIngredients.map((ing) => (
-                <li key={ing.key} className="flex items-center">
-                  <div
-                    className={`flex flex-1 items-center gap-3 rounded-xl border px-4 py-3 transition-all ${
-                      checked.has(ing.key)
-                        ? "border-olive/30 bg-olive-light/50"
-                        : "border-border bg-card hover:border-primary/20 hover:shadow-sm"
-                    }`}
-                  >
-                    {/* Checkbox */}
-                    <button
-                      onClick={() => toggleCheck(ing.key)}
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all ${
-                        checked.has(ing.key)
-                          ? "border-olive bg-olive text-white"
-                          : "border-muted/40"
-                      }`}
-                    >
-                      {checked.has(ing.key) && (
-                        <svg
-                          className="h-3 w-3"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={3}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      )}
-                    </button>
-
-                    {/* Ingredient info */}
-                    <span
-                      onClick={() => toggleCheck(ing.key)}
-                      className="flex-1 cursor-pointer flex items-center gap-2"
-                    >
-                      <span className={`font-medium capitalize ${checked.has(ing.key) ? "text-muted line-through" : ""}`}>{ing.name}</span>
-                      {ing.manual && (
-                        <span className="text-[10px] text-saffron">
-                          manual
-                        </span>
-                      )}
-                      {ing.pantryDiscount > 0 && (
-                        <span className="text-[10px] text-olive">
-                          −{formatQuantity(ing.pantryDiscount)} en despensa
-                        </span>
-                      )}
-                    </span>
-
-                    {/* Quantity: selector for "unidad", label + X for weight/volume */}
-                    {ing.unit === "unidad" ? (
-                      <div className="flex shrink-0 items-center gap-1.5">
-                        <button
-                          onClick={() => adjustQuantity(ing.key, ing.quantity, -1, ing.extraId)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light"
-                        >
-                          −
-                        </button>
-                        <span className={`w-5 text-center text-sm font-semibold ${checked.has(ing.key) ? "text-muted" : ""}`}>
-                          {formatQuantity(ing.quantity)}
-                        </span>
-                        <button
-                          onClick={() => adjustQuantity(ing.key, ing.quantity, 1, ing.extraId)}
-                          disabled={ing.quantity >= 20}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light disabled:opacity-30"
-                        >
-                          +
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <span
-                          className={`shrink-0 text-sm font-semibold ${checked.has(ing.key) ? "text-muted" : "text-primary"}`}
-                        >
-                          {ing.quantity > 0 &&
-                            `${formatQuantity(ing.quantity)} ${ing.unit}`}
-                        </span>
-                        <button
-                          onClick={() => removeIngredient(ing.key, ing.extraId)}
-                          className="ml-1 shrink-0 rounded-lg p-1 text-muted hover:text-red-600 transition-colors"
-                        >
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      </>
-                    )}
-
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          {/* Progress bar */}
-          {totalCount > 0 && (
-            <div className="mt-8 rounded-2xl border border-border bg-card p-5 shadow-sm">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-heading font-semibold">Progreso</span>
-                <span className="text-muted">
-                  {Math.round((checkedCount / totalCount) * 100)}%
-                </span>
+            <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+              {/* Notebook top edge — spiral holes */}
+              <div className="flex items-center justify-center gap-4 border-b border-sky-200/60 bg-sky-50/30 py-1.5">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="h-2.5 w-2.5 rounded-full border border-gray-300 bg-gray-100" />
+                ))}
               </div>
-              <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-primary-light/50">
-                <div
-                  className="h-full rounded-full bg-olive transition-all duration-500"
-                  style={{
-                    width: `${(checkedCount / totalCount) * 100}%`,
-                  }}
-                />
+              {/* Ruled lines with left margin */}
+              <div className={`relative transition-opacity ${mutating ? "pointer-events-none opacity-50" : ""}`}>
+                {/* Red margin line */}
+                <div className="absolute top-0 bottom-0 left-10 w-px bg-red-300/50" />
+
+                {mergedIngredients.length === 0 ? (
+                  <div className="py-8 pl-14 pr-4 text-sm text-muted">
+                    No hay ingredientes en la lista.
+                  </div>
+                ) : (
+                  <ul>
+                    {mergedIngredients.map((ing, idx) => (
+                      <li
+                        key={ing.key}
+                        className={`flex items-center gap-3 border-b border-sky-200/40 py-2.5 pl-14 pr-4 transition-colors ${
+                          checked.has(ing.key) ? "bg-olive-light/20" : "hover:bg-sky-50/30"
+                        } ${idx === 0 ? "" : ""}`}
+                      >
+                        {/* Checkbox */}
+                        <button
+                          onClick={() => toggleCheck(ing.key)}
+                          className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded border-2 transition-all ${
+                            checked.has(ing.key)
+                              ? "border-olive bg-olive text-white"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          {checked.has(ing.key) && (
+                            <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
+
+                        {/* Ingredient info */}
+                        <span
+                          onClick={() => toggleCheck(ing.key)}
+                          className="flex flex-1 cursor-pointer items-center gap-2"
+                        >
+                          <span className={`text-sm font-medium capitalize ${checked.has(ing.key) ? "text-gray-400 line-through" : "text-gray-800"}`}>
+                            {ing.name}
+                          </span>
+                          {ing.manual && (
+                            <span className="text-[10px] text-saffron">manual</span>
+                          )}
+                          {ing.pantryDiscount > 0 && (
+                            <span className="text-[10px] text-olive">
+                              −{formatQuantity(ing.pantryDiscount)} en despensa
+                            </span>
+                          )}
+                        </span>
+
+                        {/* Quantity */}
+                        {ing.unit === "unidad" ? (
+                          <div className="flex shrink-0 items-center gap-1">
+                            <button
+                              onClick={() => adjustQuantity(ing.key, ing.quantity, -1, ing.extraId)}
+                              className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs font-bold text-gray-500 transition-colors hover:bg-gray-100"
+                            >
+                              −
+                            </button>
+                            <span className={`w-5 text-center text-sm font-semibold ${checked.has(ing.key) ? "text-gray-400" : "text-gray-700"}`}>
+                              {formatQuantity(ing.quantity)}
+                            </span>
+                            <button
+                              onClick={() => adjustQuantity(ing.key, ing.quantity, 1, ing.extraId)}
+                              disabled={ing.quantity >= 20}
+                              className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs font-bold text-gray-500 transition-colors hover:bg-gray-100 disabled:opacity-30"
+                            >
+                              +
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <span
+                              className={`shrink-0 text-sm font-semibold ${checked.has(ing.key) ? "text-gray-400" : "text-primary"}`}
+                            >
+                              {ing.quantity > 0 && `${formatQuantity(ing.quantity)} ${ing.unit}`}
+                            </span>
+                            <button
+                              onClick={() => removeIngredient(ing.key, ing.extraId)}
+                              className="ml-0.5 shrink-0 rounded p-0.5 text-gray-400 hover:text-red-500 transition-colors"
+                            >
+                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* Progress — inside notebook */}
+                {totalCount > 0 && (
+                  <div className="border-t border-sky-200/40 py-3 pl-14 pr-4">
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span className="font-semibold">Progreso</span>
+                      <span>{Math.round((checkedCount / totalCount) * 100)}%</span>
+                    </div>
+                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-gray-100">
+                      <div
+                        className="h-full rounded-full bg-olive transition-all duration-500"
+                        style={{ width: `${(checkedCount / totalCount) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          )}
+          </section>
         </>
       )}
     </div>
