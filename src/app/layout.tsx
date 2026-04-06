@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: "Tu recetario personal con lista de la compra semanal",
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo.png",
+    icon: "/recetario-logo.png",
   },
 };
 

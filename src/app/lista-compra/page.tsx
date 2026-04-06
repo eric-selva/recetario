@@ -771,7 +771,7 @@ export default function ListaCompraPage() {
                           )}
                           {ing.pantryDiscount > 0 && (
                             <span className="text-[10px] text-olive">
-                              −{formatQuantity(ing.pantryDiscount)} en despensa
+                              {formatQuantity(ing.pantryDiscount)} en despensa
                             </span>
                           )}
                         </span>

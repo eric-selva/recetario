@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 const navLinks = [
   {
@@ -40,6 +40,7 @@ export default function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/lista-compra")
@@ -62,14 +63,11 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/80 bg-card/90 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 border-b border-border/60 bg-card/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
-          <Image src="/logo.png" alt="Recetario" width={32} height={32} />
-          <span className="font-brand text-2xl font-bold bg-gradient-to-r from-primary via-saffron to-olive bg-clip-text text-transparent">
-            Recetario
-          </span>
+          <Image src="/recetario-home.png" alt="Recetario" width={140} height={22} />
         </Link>
 
         {/* Desktop nav */}
@@ -101,39 +99,32 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Mobile hamburger */}
+        {/* Mobile menu button — spoon/fork icon */}
         <button
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-muted hover:bg-primary-light hover:text-primary sm:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-primary transition-all hover:bg-primary-light sm:hidden"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Abrir menu"
         >
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            {menuOpen ? (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            ) : (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            )}
-          </svg>
+          {menuOpen ? (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
         </button>
       </div>
 
       {/* Mobile menu */}
-      {menuOpen && (
-        <nav className="border-t border-border/60 px-4 pb-4 sm:hidden">
+      <div
+        ref={menuRef}
+        className={`overflow-hidden border-t border-border/40 bg-card/80 backdrop-blur-md transition-all duration-300 ease-in-out sm:hidden ${
+          menuOpen ? "max-h-60 opacity-100" : "max-h-0 opacity-0 border-t-0"
+        }`}
+      >
+        <nav className="px-4 pb-4">
           <div className="space-y-1 pt-2">
             {navLinks.map((link) => (
               <Link
@@ -162,7 +153,7 @@ export default function Header() {
             ))}
           </div>
         </nav>
-      )}
+      </div>
     </header>
   );
 }

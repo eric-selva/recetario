@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Nevera: enrich with catalog name
+  // Nevera: enrich with catalog name and sort alphabetically
   const enriched = items.map((item) => {
     const catalog = item.catalog as unknown as { id: string; name: string } | null
     return {
@@ -44,6 +44,8 @@ export async function GET(request: NextRequest) {
       catalog_id: item.catalog_id ?? catalog?.id ?? null,
     }
   })
+
+  enriched.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'es'))
 
   return Response.json(enriched)
 }

@@ -117,10 +117,11 @@ export async function POST(request: NextRequest) {
         quantity: number;
         unit: string;
         shoppable?: boolean;
+        catalog_id?: string;
       };
 
-      // Look up or create catalog entry
-      const catalogId = await resolveCatalogId(
+      // Use provided catalog_id or look up / create catalog entry
+      const catalogId = ing.catalog_id ?? await resolveCatalogId(
         ing.name,
         ing.unit,
         ing.shoppable,

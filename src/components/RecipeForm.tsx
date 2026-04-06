@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { cachedFetch } from '@/lib/fetchCache'
 import type { MealType, IngredientUnit } from '@/types/database'
 
 interface IngredientInput {
@@ -10,6 +11,13 @@ interface IngredientInput {
   quantity: number
   unit: IngredientUnit
   shoppable: boolean
+  catalog_id?: string
+}
+
+interface CatalogSuggestion {
+  id: string
+  name: string
+  unit: string
 }
 
 interface StepInput {
@@ -61,6 +69,44 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  // Ingredient autocomplete
+  const [focusedIng, setFocusedIng] = useState<number | null>(null)
+  const [suggestions, setSuggestions] = useState<CatalogSuggestion[]>([])
+  const ingWrapperRefs = useRef<(HTMLDivElement | null)[]>([])
+
+  useEffect(() => {
+    if (focusedIng === null) { setSuggestions([]); return }
+    const name = ingredients[focusedIng]?.name?.trim()
+    if (!name || name.length < 1) { setSuggestions([]); return }
+    const timer = setTimeout(() => {
+      cachedFetch<{ data: CatalogSuggestion[]; total: number }>(
+        `/api/ingredientes?search=${encodeURIComponent(name)}&limit=6&offset=0`,
+      ).then((res) => setSuggestions(res.data ?? []))
+    }, 200)
+    return () => clearTimeout(timer)
+  }, [focusedIng, focusedIng !== null ? ingredients[focusedIng]?.name : null])
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (focusedIng !== null) {
+        const wrapper = ingWrapperRefs.current[focusedIng]
+        if (wrapper && !wrapper.contains(e.target as Node)) {
+          setFocusedIng(null)
+        }
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [focusedIng])
+
+  function selectSuggestion(index: number, s: CatalogSuggestion) {
+    const updated = [...ingredients]
+    updated[index] = { ...updated[index], name: s.name, unit: s.unit as IngredientUnit, catalog_id: s.id }
+    setIngredients(updated)
+    setFocusedIng(null)
+    setSuggestions([])
+  }
+
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -84,6 +130,7 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
   function updateIngredient(index: number, field: keyof IngredientInput, value: string | number | boolean) {
     const updated = [...ingredients]
     updated[index] = { ...updated[index], [field]: value }
+    if (field === 'name') delete updated[index].catalog_id
     setIngredients(updated)
   }
 
@@ -111,7 +158,13 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
       meal_type: mealType,
       prep_time: prepTime,
       servings,
-      ingredients: ingredients.filter((i) => i.name.trim()),
+      ingredients: ingredients.filter((i) => i.name.trim()).map((i) => ({
+        name: i.name,
+        quantity: i.quantity,
+        unit: i.unit,
+        shoppable: i.shoppable,
+        ...(i.catalog_id ? { catalog_id: i.catalog_id } : {}),
+      })),
       steps: steps.filter((s) => s.instruction.trim()),
     }
     const url = isEditing ? `/api/recetas/${recipeId}` : '/api/recetas'
@@ -247,13 +300,36 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
         </div>
         {ingredients.map((ing, i) => (
           <div key={i} className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="Ingrediente"
-              value={ing.name}
-              onChange={(e) => updateIngredient(i, 'name', e.target.value)}
-              className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
-            />
+            <div ref={(el) => { ingWrapperRefs.current[i] = el }} className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Ingrediente"
+                value={ing.name}
+                onChange={(e) => updateIngredient(i, 'name', e.target.value)}
+                onFocus={() => setFocusedIng(i)}
+                className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
+              />
+              {ing.catalog_id && (
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-olive">
+                  ✓
+                </span>
+              )}
+              {focusedIng === i && suggestions.length > 0 && (
+                <div className="absolute z-30 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => selectSuggestion(i, s)}
+                      className="flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-primary-light transition-colors"
+                    >
+                      <span className="font-medium capitalize">{s.name}</span>
+                      <span className="text-xs text-muted">{s.unit}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <input
               type="number"
               placeholder="0"

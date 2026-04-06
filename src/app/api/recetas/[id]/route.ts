@@ -70,8 +70,9 @@ export async function PUT(
           quantity: number
           unit: string
           shoppable?: boolean
+          catalog_id?: string
         }
-        const catalogId = await resolveCatalogId(ing.name, ing.unit, ing.shoppable)
+        const catalogId = ing.catalog_id ?? await resolveCatalogId(ing.name, ing.unit, ing.shoppable)
         ingredientRows.push({
           recipe_id: id,
           catalog_id: catalogId,
