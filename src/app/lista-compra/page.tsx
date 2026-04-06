@@ -645,9 +645,9 @@ export default function ListaCompraPage() {
         <>
           {/* Recipes in list */}
           {items.length > 0 && (
-            <section className="mt-8">
+            <section className="mt-2">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                {/* <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <svg
                     className="h-4 w-4"
                     fill="none"
@@ -664,7 +664,7 @@ export default function ListaCompraPage() {
                 </div>
                 <h2 className="font-heading text-lg font-semibold">
                   Recetas de esta semana
-                </h2>
+                </h2> */}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {addingRecipe && (
