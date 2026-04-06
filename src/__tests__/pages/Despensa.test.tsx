@@ -33,7 +33,7 @@ describe('Despensa Page', () => {
   it('renders both tab options', () => {
     render(<DespensaPage />)
     expect(screen.getByText('Despensa', { selector: 'button' })).toBeInTheDocument()
-    expect(screen.getByText('Congelador')).toBeInTheDocument()
+    expect(screen.getByText('Tuppers')).toBeInTheDocument()
   })
 
   it('shows ingredient search on despensa tab', () => {
@@ -48,21 +48,21 @@ describe('Despensa Page', () => {
     })
   })
 
-  it('switches to congelador tab', async () => {
+  it('switches to tuppers tab', async () => {
     render(<DespensaPage />)
-    fireEvent.click(screen.getByText('Congelador'))
+    fireEvent.click(screen.getByText('Tuppers'))
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/Buscar receta/)).toBeInTheDocument()
     })
   })
 
-  it('shows empty state for congelador', async () => {
+  it('shows empty state for tuppers', async () => {
     render(<DespensaPage />)
-    fireEvent.click(screen.getByText('Congelador'))
+    fireEvent.click(screen.getByText('Tuppers'))
 
     await waitFor(() => {
-      expect(screen.getByText(/El congelador esta vacio/)).toBeInTheDocument()
+      expect(screen.getByText(/No hay tuppers/)).toBeInTheDocument()
     })
   })
 
@@ -85,7 +85,7 @@ describe('Despensa Page', () => {
     })
   })
 
-  it('renders congelador items with servings selector', async () => {
+  it('renders tuppers items with servings selector', async () => {
     mockFetch({
       '/api/despensa': [
         {
@@ -98,10 +98,11 @@ describe('Despensa Page', () => {
         },
       ],
       '/api/recetas': [],
+      '/api/despensa/tupper-extras': [],
     })
 
     render(<DespensaPage />)
-    fireEvent.click(screen.getByText('Congelador'))
+    fireEvent.click(screen.getByText('Tuppers'))
 
     await waitFor(() => {
       expect(screen.getByText('Pollo asado')).toBeInTheDocument()

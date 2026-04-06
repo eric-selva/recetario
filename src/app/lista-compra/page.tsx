@@ -38,6 +38,11 @@ interface ExtraIngredient {
   unit: string;
 }
 
+interface QtyOverride {
+  ingredient_key: string;
+  quantity: number;
+}
+
 interface RecipeSuggestion {
   id: string;
   title: string;
@@ -69,6 +74,7 @@ export default function ListaCompraPage() {
   const [loading, setLoading] = useState(true);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [removed, setRemoved] = useState<Set<string>>(new Set());
+  const [qtyOverrides, setQtyOverrides] = useState<Map<string, number>>(new Map());
   const [mutating, setMutating] = useState(false);
   const [removingRecipe, setRemovingRecipe] = useState<string | null>(null);
 
@@ -90,11 +96,19 @@ export default function ListaCompraPage() {
       fetch("/api/lista-compra").then((r) => r.json()),
       fetch("/api/despensa?location=nevera").then((r) => r.json()),
       fetch("/api/lista-compra/extras").then((r) => r.json()),
+      fetch("/api/lista-compra/qty-overrides").then((r) => r.json()),
     ])
-      .then(([listData, pantryData, extrasData]) => {
+      .then(([listData, pantryData, extrasData, overridesData]) => {
         setItems(Array.isArray(listData) ? listData : []);
         setPantry(Array.isArray(pantryData) ? pantryData : []);
         setExtras(Array.isArray(extrasData) ? extrasData : []);
+        if (Array.isArray(overridesData)) {
+          const map = new Map<string, number>();
+          for (const o of overridesData as QtyOverride[]) {
+            map.set(o.ingredient_key, o.quantity);
+          }
+          setQtyOverrides(map);
+        }
       })
       .finally(() => setLoading(false));
   }
@@ -257,11 +271,12 @@ export default function ListaCompraPage() {
       const adjusted = value.manual
         ? value.quantity
         : Math.max(0, value.quantity - inPantry);
-      if (adjusted > 0) {
+      const finalQty = qtyOverrides.has(key) ? qtyOverrides.get(key)! : adjusted;
+      if (finalQty > 0) {
         result.push({
           key,
           name: value.name,
-          quantity: adjusted,
+          quantity: finalQty,
           unit: value.unit,
           pantryDiscount:
             !value.manual && inPantry > 0
@@ -274,7 +289,7 @@ export default function ListaCompraPage() {
     }
 
     return result;
-  }, [items, pantry, removed, extras]);
+  }, [items, pantry, removed, extras, qtyOverrides]);
 
   function toggleCheck(key: string) {
     setChecked((prev) => {
@@ -285,6 +300,32 @@ export default function ListaCompraPage() {
     });
   }
 
+  function adjustQuantity(key: string, currentQty: number, delta: number, extraId?: string) {
+    const newQty = currentQty + delta;
+    if (newQty <= 0) {
+      return removeIngredient(key, extraId);
+    }
+    setQtyOverrides((prev) => {
+      const next = new Map(prev);
+      next.set(key, newQty);
+      return next;
+    });
+    if (extraId) {
+      fetch("/api/lista-compra/extras", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: extraId, quantity: newQty }),
+      });
+      setExtras((prev) => prev.map((e) => (e.id === extraId ? { ...e, quantity: newQty } : e)));
+    } else {
+      fetch("/api/lista-compra/qty-overrides", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ingredient_key: key, quantity: newQty }),
+      });
+    }
+  }
+
   function removeIngredient(key: string, extraId?: string) {
     setRemoved((prev) => new Set(prev).add(key));
     setChecked((prev) => {
@@ -292,10 +333,17 @@ export default function ListaCompraPage() {
       next.delete(key);
       return next;
     });
+    setQtyOverrides((prev) => {
+      const next = new Map(prev);
+      next.delete(key);
+      return next;
+    });
     if (extraId) {
       fetch(`/api/lista-compra/extras?id=${extraId}`, { method: "DELETE" });
       setExtras((prev) => prev.filter((e) => e.id !== extraId));
     }
+    // Remove qty override from DB
+    fetch(`/api/lista-compra/qty-overrides?key=${encodeURIComponent(key)}`, { method: "DELETE" });
   }
 
   function removeChecked() {
@@ -337,9 +385,11 @@ export default function ListaCompraPage() {
     await Promise.all([
       fetch("/api/lista-compra", { method: "DELETE" }),
       fetch("/api/lista-compra/extras", { method: "DELETE" }),
+      fetch("/api/lista-compra/qty-overrides", { method: "DELETE" }),
     ]);
     setItems([]);
     setExtras([]);
+    setQtyOverrides(new Map());
     setChecked(new Set());
     setRemoved(new Set());
     setMutating(false);
@@ -353,7 +403,7 @@ export default function ListaCompraPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-8">
+      <div className="mx-auto max-w-5xl px-4 py-8">
         <h1 className="font-heading text-3xl font-bold">Lista de la compra</h1>
         <Skeleton
           name="shopping-list"
@@ -379,63 +429,12 @@ export default function ListaCompraPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-heading text-3xl font-bold">
-            Lista de la compra
-          </h1>
-          {hasContent && (
-            <p className="mt-1 text-sm text-muted">
-              {checkedCount} de {totalCount} ingredientes
-            </p>
-          )}
-        </div>
-        {hasContent && (
-          <div className="flex gap-2">
-            {checkedCount > 0 && (
-              <button
-                onClick={removeChecked}
-                className="inline-flex items-center gap-2 rounded-xl border border-olive/30 px-4 py-2 text-sm font-semibold text-olive transition-all hover:bg-olive-light"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                Quitar ({checkedCount})
-              </button>
-            )}
-            <button
-              onClick={clearAll}
-              className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition-all hover:bg-red-50"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-                />
-              </svg>
-              Vaciar lista
-            </button>
-          </div>
-        )}
+      <div>
+        <h1 className="font-heading text-3xl font-bold">
+          Lista de la compra
+        </h1>
       </div>
 
       {/* Search to add recipes or ingredients */}
@@ -579,6 +578,31 @@ export default function ListaCompraPage() {
         )}
       </div>
 
+      {/* Count + Clear row */}
+      {hasContent && (
+        <div className="mt-3 flex items-center justify-between">
+          <p className="text-sm text-muted">
+            {checkedCount} de {totalCount} ingredientes
+          </p>
+          <div className="flex items-center gap-3">
+            {checkedCount > 0 && (
+              <button
+                onClick={removeChecked}
+                className="text-sm font-semibold text-olive hover:text-olive/80 transition-colors"
+              >
+                Quitar ({checkedCount})
+              </button>
+            )}
+            <button
+              onClick={clearAll}
+              className="text-sm text-red-600 hover:text-red-700 transition-colors"
+            >
+              Vaciar lista
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Empty state */}
       {!hasContent && (
         <div className="mt-16 flex flex-col items-center gap-5 text-center">
@@ -683,49 +707,23 @@ export default function ListaCompraPage() {
             </section>
           )}
 
-          <div className="divider-herbs my-8" />
-
           {/* Merged ingredient list */}
-          <section>
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-saffron/15 text-saffron">
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-                  />
-                </svg>
-              </div>
-              <h2 className="font-heading text-lg font-semibold">
-                Ingredientes
-              </h2>
-            </div>
-            <p className="mt-2 text-xs text-muted">
-              Las cantidades se ajustan restando lo que ya tienes en la
-              despensa.
-            </p>
+          <section className="mt-4">
             <ul
               className={`mt-4 space-y-2 transition-opacity ${mutating ? "pointer-events-none opacity-50" : ""}`}
             >
               {mergedIngredients.map((ing) => (
-                <li key={ing.key} className="flex items-center gap-2">
-                  <button
-                    onClick={() => toggleCheck(ing.key)}
-                    className={`flex flex-1 items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
+                <li key={ing.key} className="flex items-center">
+                  <div
+                    className={`flex flex-1 items-center gap-3 rounded-xl border px-4 py-3 transition-all ${
                       checked.has(ing.key)
                         ? "border-olive/30 bg-olive-light/50"
                         : "border-border bg-card hover:border-primary/20 hover:shadow-sm"
                     }`}
                   >
                     {/* Checkbox */}
-                    <span
+                    <button
+                      onClick={() => toggleCheck(ing.key)}
                       className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all ${
                         checked.has(ing.key)
                           ? "border-olive bg-olive text-white"
@@ -747,11 +745,12 @@ export default function ListaCompraPage() {
                           />
                         </svg>
                       )}
-                    </span>
+                    </button>
 
                     {/* Ingredient info */}
                     <span
-                      className={`flex-1 ${checked.has(ing.key) ? "text-muted line-through" : ""}`}
+                      onClick={() => toggleCheck(ing.key)}
+                      className={`flex-1 cursor-pointer ${checked.has(ing.key) ? "text-muted line-through" : ""}`}
                     >
                       <span className="font-medium capitalize">{ing.name}</span>
                       {ing.manual && (
@@ -766,35 +765,56 @@ export default function ListaCompraPage() {
                       )}
                     </span>
 
-                    {/* Quantity */}
-                    <span
-                      className={`text-sm font-semibold ${checked.has(ing.key) ? "text-muted" : "text-primary"}`}
-                    >
-                      {ing.quantity > 0 &&
-                        `${formatQuantity(ing.quantity)} ${ing.unit}`}
-                    </span>
-                  </button>
+                    {/* Quantity: selector for "unidad", label + X for weight/volume */}
+                    {ing.unit === "unidad" ? (
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <button
+                          onClick={() => adjustQuantity(ing.key, ing.quantity, -1, ing.extraId)}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light"
+                        >
+                          −
+                        </button>
+                        <span className={`w-5 text-center text-sm font-semibold ${checked.has(ing.key) ? "text-muted" : ""}`}>
+                          {formatQuantity(ing.quantity)}
+                        </span>
+                        <button
+                          onClick={() => adjustQuantity(ing.key, ing.quantity, 1, ing.extraId)}
+                          disabled={ing.quantity >= 20}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light disabled:opacity-30"
+                        >
+                          +
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <span
+                          className={`shrink-0 text-sm font-semibold ${checked.has(ing.key) ? "text-muted" : "text-primary"}`}
+                        >
+                          {ing.quantity > 0 &&
+                            `${formatQuantity(ing.quantity)} ${ing.unit}`}
+                        </span>
+                        <button
+                          onClick={() => removeIngredient(ing.key, ing.extraId)}
+                          className="ml-1 shrink-0 rounded-lg p-1 text-muted hover:text-red-600 transition-colors"
+                        >
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      </>
+                    )}
 
-                  {/* Remove single ingredient */}
-                  <button
-                    onClick={() => removeIngredient(ing.key, ing.extraId)}
-                    className="rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600"
-                    title="Quitar ingrediente"
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
+                  </div>
                 </li>
               ))}
             </ul>

@@ -6,7 +6,7 @@ import { cachedFetch, invalidateCache } from "@/lib/fetchCache";
 
 const tabs = [
   { value: "nevera", label: "Despensa" },
-  { value: "congelador", label: "Congelador" },
+  { value: "congelador", label: "Tuppers" },
 ];
 
 const PAGE_SIZE = 10;
@@ -48,6 +48,12 @@ interface RecipeSuggestion {
   image_url: string | null;
 }
 
+interface TupperExtra {
+  id: string;
+  name: string;
+  quantity: number;
+}
+
 // ----- Component -----
 
 export default function DespensaPage() {
@@ -57,7 +63,7 @@ export default function DespensaPage() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="font-heading text-3xl font-bold">Despensa</h1>
       <p className="mt-1 text-sm text-muted">
-        Controla lo que tienes en despensa y congelador
+        Controla lo que tienes en despensa y tuppers
       </p>
 
       <div className="mt-6">
@@ -170,6 +176,9 @@ function NeveraTab() {
   }
 
   async function updateQuantity(id: string, quantity: number) {
+    if (quantity <= 0) {
+      return removeItem(id);
+    }
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, quantity } : i)));
     await fetch("/api/despensa", {
       method: "PATCH",
@@ -365,10 +374,9 @@ function NeveraTab() {
                 <div className="flex shrink-0 items-center gap-1.5">
                   <button
                     onClick={() =>
-                      updateQuantity(item.id, Math.max(1, item.quantity - 1))
+                      updateQuantity(item.id, item.quantity - 1)
                     }
-                    disabled={item.quantity <= 1}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light disabled:opacity-30"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light"
                   >
                     −
                   </button>
@@ -377,34 +385,14 @@ function NeveraTab() {
                   </span>
                   <button
                     onClick={() =>
-                      updateQuantity(item.id, Math.min(99, item.quantity + 1))
+                      updateQuantity(item.id, Math.min(20, item.quantity + 1))
                     }
-                    disabled={item.quantity >= 99}
+                    disabled={item.quantity >= 20}
                     className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light disabled:opacity-30"
                   >
                     +
                   </button>
                 </div>
-
-                <button
-                  onClick={() => removeItem(item.id)}
-                  className="rounded-lg p-1.5 text-muted hover:bg-red-50 hover:text-red-600"
-                  title="Quitar"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
               </li>
             ))}
           </ul>
@@ -414,10 +402,11 @@ function NeveraTab() {
   );
 }
 
-// ==================== CONGELADOR TAB ====================
+// ==================== TUPPERS TAB ====================
 
 function CongeladorTab() {
   const [items, setItems] = useState<CongeladorItem[]>([]);
+  const [extras, setExtras] = useState<TupperExtra[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -431,9 +420,14 @@ function CongeladorTab() {
 
   const fetchItems = useCallback(() => {
     setLoading(true);
-    fetch("/api/despensa?location=congelador")
-      .then((r) => r.json())
-      .then((data) => setItems(Array.isArray(data) ? data : []))
+    Promise.all([
+      fetch("/api/despensa?location=congelador").then((r) => r.json()),
+      fetch("/api/despensa/tupper-extras").then((r) => r.json()),
+    ])
+      .then(([recipeData, extrasData]) => {
+        setItems(Array.isArray(recipeData) ? recipeData : []);
+        setExtras(Array.isArray(extrasData) ? extrasData : []);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -511,12 +505,44 @@ function CongeladorTab() {
     setAdding(false);
   }
 
+  async function addCustomDish() {
+    if (!search.trim()) return;
+    setSearch("");
+    setShowSuggestions(false);
+    setAdding(true);
+    const res = await fetch("/api/despensa/tupper-extras", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: search.trim(), quantity: 1 }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setExtras((prev) => [data, ...prev]);
+    }
+    setAdding(false);
+  }
+
   async function updateServings(id: string, servings: number) {
+    if (servings <= 0) {
+      return removeItem(id);
+    }
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, servings } : i)));
     await fetch("/api/despensa", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, servings }),
+    });
+  }
+
+  async function updateExtraQuantity(id: string, quantity: number) {
+    if (quantity <= 0) {
+      return removeExtra(id);
+    }
+    setExtras((prev) => prev.map((e) => (e.id === id ? { ...e, quantity } : e)));
+    await fetch("/api/despensa/tupper-extras", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, quantity }),
     });
   }
 
@@ -527,10 +553,21 @@ function CongeladorTab() {
     setRemovingId(null);
   }
 
+  async function removeExtra(id: string) {
+    setRemovingId(id);
+    await fetch(`/api/despensa/tupper-extras?id=${id}`, { method: "DELETE" });
+    setExtras((prev) => prev.filter((e) => e.id !== id));
+    setRemovingId(null);
+  }
+
   async function clearAll() {
-    if (!confirm("¿Vaciar todo el congelador?")) return;
-    await fetch("/api/despensa?location=congelador", { method: "DELETE" });
+    if (!confirm("¿Vaciar todos los tuppers?")) return;
+    await Promise.all([
+      fetch("/api/despensa?location=congelador", { method: "DELETE" }),
+      fetch("/api/despensa/tupper-extras", { method: "DELETE" }),
+    ]);
     setItems([]);
+    setExtras([]);
   }
 
   const mealTypeStyles: Record<string, string> = {
@@ -544,6 +581,8 @@ function CongeladorTab() {
     cena: "Cena",
     postre: "Postre",
   };
+
+  const totalItems = items.length + extras.length;
 
   return (
     <>
@@ -565,19 +604,22 @@ function CongeladorTab() {
           </svg>
           <input
             type="text"
-            placeholder="Buscar receta para añadir..."
+            placeholder="Buscar receta o añadir plato..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
               setShowSuggestions(true);
             }}
             onFocus={() => setShowSuggestions(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") addCustomDish();
+            }}
             className="w-full rounded-xl border border-border bg-card py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
           />
         </div>
 
         {/* Suggestions dropdown */}
-        {showSuggestions && suggestions.length > 0 && (
+        {showSuggestions && search.trim().length > 0 && (
           <div
             ref={dropdownRef}
             onScroll={handleDropdownScroll}
@@ -625,6 +667,30 @@ function CongeladorTab() {
                 ))}
               </div>
             )}
+            {/* Custom add option */}
+            <button
+              onClick={addCustomDish}
+              className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-sm hover:bg-primary-light transition-colors"
+            >
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-olive/10 text-olive">
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4.5v15m7.5-7.5h-15"
+                  />
+                </svg>
+              </span>
+              <span>
+                Añadir &quot;<span className="font-semibold">{search.trim()}</span>&quot;
+              </span>
+            </button>
           </div>
         )}
       </div>
@@ -636,7 +702,7 @@ function CongeladorTab() {
             <div key={i} className="h-20 rounded-xl bg-primary-light/25" />
           ))}
         </div>
-      ) : items.length === 0 ? (
+      ) : totalItems === 0 ? (
         <div className="mt-16 flex flex-col items-center gap-4 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-olive/10 text-olive">
             <svg
@@ -655,10 +721,10 @@ function CongeladorTab() {
           </div>
           <div>
             <p className="font-heading text-lg font-semibold">
-              El congelador esta vacio
+              No hay tuppers
             </p>
             <p className="mt-1 text-sm text-muted">
-              Busca recetas para añadirlas.
+              Busca recetas o añade platos para guardarlos.
             </p>
           </div>
         </div>
@@ -666,13 +732,13 @@ function CongeladorTab() {
         <>
           <div className="mt-2 flex items-center justify-between">
             <p className="text-sm text-muted">
-              {items.length} receta{items.length !== 1 ? "s" : ""}
+              {totalItems} plato{totalItems !== 1 ? "s" : ""}
             </p>
             <button
               onClick={clearAll}
               className="text-xs font-medium text-red-500 hover:text-red-600"
             >
-              Vaciar congelador
+              Vaciar tuppers
             </button>
           </div>
           <ul className="mt-3 space-y-2">
@@ -683,6 +749,7 @@ function CongeladorTab() {
                 <div className="ml-auto h-4 w-14 rounded-lg bg-primary-light/25" />
               </li>
             )}
+            {/* Recipe-based items */}
             {items.map((item) => (
               <li
                 key={item.id}
@@ -709,10 +776,9 @@ function CongeladorTab() {
                 <div className="flex shrink-0 items-center gap-1.5">
                   <button
                     onClick={() =>
-                      updateServings(item.id, Math.max(1, item.servings - 1))
+                      updateServings(item.id, item.servings - 1)
                     }
-                    disabled={item.servings <= 1}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light disabled:opacity-30"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light"
                   >
                     −
                   </button>
@@ -721,34 +787,58 @@ function CongeladorTab() {
                   </span>
                   <button
                     onClick={() =>
-                      updateServings(item.id, Math.min(8, item.servings + 1))
+                      updateServings(item.id, Math.min(20, item.servings + 1))
                     }
-                    disabled={item.servings >= 8}
+                    disabled={item.servings >= 20}
                     className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light disabled:opacity-30"
                   >
                     +
                   </button>
                 </div>
+              </li>
+            ))}
+            {/* Custom tupper extras */}
+            {extras.map((extra) => (
+              <li
+                key={extra.id}
+                className={`flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-sm transition-opacity ${
+                  removingId === extra.id ? "animate-pulse opacity-40" : ""
+                }`}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium bg-saffron/15 text-saffron">
+                      Manual
+                    </span>
+                    <p className="truncate text-sm font-medium capitalize">
+                      {extra.name}
+                    </p>
+                  </div>
+                </div>
 
-                <button
-                  onClick={() => removeItem(item.id)}
-                  className="rounded-lg p-1.5 text-muted hover:bg-red-50 hover:text-red-600"
-                  title="Quitar"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
+                {/* Quantity selector */}
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <button
+                    onClick={() =>
+                      updateExtraQuantity(extra.id, extra.quantity - 1)
+                    }
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
+                    −
+                  </button>
+                  <span className="w-5 text-center text-sm font-semibold">
+                    {extra.quantity}
+                  </span>
+                  <button
+                    onClick={() =>
+                      updateExtraQuantity(extra.id, Math.min(20, extra.quantity + 1))
+                    }
+                    disabled={extra.quantity >= 20}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm font-bold transition-colors hover:bg-primary-light disabled:opacity-30"
+                  >
+                    +
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
