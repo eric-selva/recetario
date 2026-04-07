@@ -166,7 +166,7 @@ export default function RecetaDetailPage() {
           )}
 
           {/* Title & meta */}
-          <div className="mt-6">
+          <div className="mt-3">
             <div className="flex flex-wrap items-center gap-3">
               <span
                 className={`rounded-lg px-3 py-1 text-xs font-semibold ${mealTypeStyles[recipe.meal_type]}`}
@@ -193,7 +193,16 @@ export default function RecetaDetailPage() {
               )}
             </div>
 
-            {/* Servings selector */}
+            <h1 className="mt-4 font-heading text-3xl font-bold sm:text-4xl">
+              {recipe.title}
+            </h1>
+            {recipe.description && (
+              <p className="mt-3 text-lg leading-snug text-muted">
+                {recipe.description}
+              </p>
+            )}
+
+            {/* Servings selector + Add button */}
             <div className="mt-4 flex items-center gap-3">
               <svg
                 className="h-4 w-4 text-muted"
@@ -213,54 +222,45 @@ export default function RecetaDetailPage() {
                 <button
                   onClick={() => setServings(Math.max(1, servings - 1))}
                   disabled={servings <= 1}
-                  className="flex h-9 w-9 items-center justify-center rounded-l-xl border border-border bg-card text-lg font-semibold transition-all hover:bg-primary-light/30 disabled:opacity-30"
+                  className="flex h-7 w-7 items-center justify-center rounded-l-lg border border-border bg-card text-sm font-semibold transition-all hover:bg-primary-light/30 disabled:opacity-30 sm:h-9 sm:w-9 sm:rounded-l-xl sm:text-lg"
                 >
                   −
                 </button>
-                <span className="flex h-9 w-10 items-center justify-center border-y border-border bg-primary text-sm font-bold text-white">
+                <span className="flex h-7 w-8 items-center justify-center border-y border-border bg-primary text-xs font-bold text-white sm:h-9 sm:w-10 sm:text-sm">
                   {servings}
                 </span>
                 <button
                   onClick={() => setServings(Math.min(8, servings + 1))}
                   disabled={servings >= 8}
-                  className="flex h-9 w-9 items-center justify-center rounded-r-xl border border-border bg-card text-lg font-semibold transition-all hover:bg-primary-light/30 disabled:opacity-30"
+                  className="flex h-7 w-7 items-center justify-center rounded-r-lg border border-border bg-card text-sm font-semibold transition-all hover:bg-primary-light/30 disabled:opacity-30 sm:h-9 sm:w-9 sm:rounded-r-xl sm:text-lg"
                 >
                   +
                 </button>
               </div>
-            </div>
-            <h1 className="mt-4 font-heading text-3xl font-bold sm:text-4xl">
-              {recipe.title}
-            </h1>
-            {recipe.description && (
-              <p className="mt-3 text-lg leading-relaxed text-muted">
-                {recipe.description}
-              </p>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="mt-8 flex flex-wrap gap-3">
-            <button
-              onClick={handleAddToShoppingList}
-              disabled={addingToList}
-              className="inline-flex items-center gap-2 rounded-2xl bg-olive px-6 py-3 text-sm font-semibold text-white shadow-md shadow-olive/20 transition-all hover:bg-olive/90 hover:shadow-lg disabled:opacity-50"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
+              <button
+                onClick={handleAddToShoppingList}
+                disabled={addingToList}
+                className="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-olive px-4 py-1.5 text-xs font-semibold text-white shadow-sm shadow-olive/20 transition-all hover:bg-olive/90 disabled:opacity-50 sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-2 sm:text-sm"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 4.5v15m7.5-7.5h-15"
-                />
-              </svg>
-              {addingToList ? "Añadiendo..." : "Añadir a la lista de compra"}
-            </button>
+                <svg
+                  className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.5 3.5h2l.6 3M7 13h10l4-8H6.1"
+                  />
+                  <circle cx="8" cy="20" r="1.5" />
+                  <circle cx="17" cy="20" r="1.5" />
+                  <path d="M7 13l-1.4-7" />
+                </svg>
+                {addingToList ? "Añadiendo..." : "Añadir a la lista"}
+              </button>
+            </div>
           </div>
 
           <div className="divider-herbs my-10" />
