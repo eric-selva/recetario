@@ -242,23 +242,7 @@ export default function RecetaDetailPage() {
                 disabled={addingToList}
                 className="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-olive px-4 py-1.5 text-xs font-semibold text-white shadow-sm shadow-olive/20 transition-all hover:bg-olive/90 disabled:opacity-50 sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-2 sm:text-sm"
               >
-                <svg
-                  className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3.5 3.5h2l.6 3M7 13h10l4-8H6.1"
-                  />
-                  <circle cx="8" cy="20" r="1.5" />
-                  <circle cx="17" cy="20" r="1.5" />
-                  <path d="M7 13l-1.4-7" />
-                </svg>
-                {addingToList ? "Añadiendo..." : "Añadir a la lista"}
+                {addingToList ? "Añadiendo..." : "+ Añadir"}
               </button>
             </div>
           </div>
