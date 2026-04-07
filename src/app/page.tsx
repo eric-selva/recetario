@@ -72,7 +72,7 @@ export default function Home() {
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:gap-4 [&>a]:sm:flex-1">
             <Link
               href="/recetas"
-              className="flex items-center justify-center rounded-2xl bg-primary/15 px-7 py-3.5 text-sm font-semibold text-primary transition-all hover:bg-primary/25 sm:py-2.5"
+              className="flex items-center justify-center rounded-2xl bg-primary/15 px-7 py-3.5 text-lg font-semibold text-primary transition-all hover:bg-primary/25 sm:py-2.5"
             >
               <span className="inline-flex w-[140px] items-center gap-2.5 sm:w-auto sm:justify-center">
                 <svg className="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
@@ -85,7 +85,7 @@ export default function Home() {
             </Link>
             <Link
               href="/despensa"
-              className="flex items-center justify-center rounded-2xl bg-saffron/15 px-7 py-3.5 text-sm font-semibold text-saffron transition-all hover:bg-saffron/25 sm:py-2.5"
+              className="flex items-center justify-center rounded-2xl bg-saffron/15 px-7 py-3.5 text-lg font-semibold text-saffron transition-all hover:bg-saffron/25 sm:py-2.5"
             >
               <span className="inline-flex w-[140px] items-center gap-2.5 sm:w-auto sm:justify-center">
                 <svg className="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
@@ -96,9 +96,9 @@ export default function Home() {
             </Link>
             <Link
               href="/lista-compra"
-              className="flex items-center justify-center rounded-2xl bg-olive/15 px-7 py-3.5 text-sm font-semibold text-olive transition-all hover:bg-olive/25 sm:py-2.5"
+              className="flex items-center justify-center rounded-2xl bg-olive/15 px-7 py-3.5 text-lg font-semibold text-olive transition-all hover:bg-olive/25 sm:py-2.5"
             >
-              <span className="inline-flex w-[140px] items-center gap-2.5 sm:w-auto sm:justify-center">
+              <span className="inline-flex w-[180px] items-center gap-2.5 sm:w-auto sm:justify-center">
                 <svg className="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3.5 3.5h2l.6 3M7 13h10l4-8H6.1" />
                   <circle cx="8" cy="20" r="1.5" />
