@@ -39,7 +39,7 @@ export default function RecetasPage() {
   const [mealType, setMealType] = useState("comida");
   const [search, setSearch] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid-2");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
