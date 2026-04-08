@@ -9,6 +9,7 @@ export interface Recipe {
   image_url: string | null
   meal_type: MealType
   prep_time: number
+  calories?: number | null
   servings: number
   created_at: string
   updated_at: string

@@ -47,12 +47,12 @@ export async function PUT(
 ) {
   const { id } = await params
   const body = await request.json()
-  const { title, description, image_url, meal_type, prep_time, servings, ingredients, steps } = body
+  const { title, description, image_url, meal_type, prep_time, servings, calories, ingredients, steps } = body
 
   // Update recipe
   const { error: recipeError } = await supabase
     .from('recipes')
-    .update({ title, description, image_url, meal_type, prep_time, servings })
+    .update({ title, description, image_url, meal_type, prep_time, servings, calories })
     .eq('id', id)
 
   if (recipeError) {
