@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Skeleton } from "boneyard-js/react";
 import Toast from "@/components/Toast";
+import { getColors } from "@/lib/mealColors";
 import type { RecipeWithDetails } from "@/types/database";
 
 const mealTypeLabels: Record<string, string> = {
@@ -17,7 +18,7 @@ const mealTypeLabels: Record<string, string> = {
 const mealTypeStyles: Record<string, string> = {
   comida: "bg-primary/10 text-primary",
   cena: "bg-night/10 text-night",
-  postre: "bg-saffron/15 text-saffron",
+  postre: "bg-rose/15 text-rose",
 };
 
 export default function RecetaDetailPage() {
@@ -35,7 +36,10 @@ export default function RecetaDetailPage() {
         if (!res.ok) throw new Error();
         return res.json();
       })
-      .then((data) => setRecipe(data))
+      .then((data) => {
+        setRecipe(data);
+        if (data?.meal_type) localStorage.setItem("recetas-tab", data.meal_type);
+      })
       .catch(() => setRecipe(null))
       .finally(() => setLoading(false));
   }, [id]);
@@ -61,7 +65,7 @@ export default function RecetaDetailPage() {
 
   if (!loading && !recipe) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-20 text-center">
+      <div className="mx-auto max-w-5xl px-4 py-20 text-center">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <svg
             className="h-8 w-8"
@@ -107,7 +111,7 @@ export default function RecetaDetailPage() {
     <Skeleton
       name="recipe-detail"
       loading={loading}
-      className="mx-auto max-w-3xl px-4 py-8"
+      className="mx-auto max-w-5xl px-4 py-8"
       fallback={
         <div className="animate-pulse space-y-6">
           <div className="h-5 w-32 rounded-lg bg-primary-light/40" />
@@ -128,12 +132,14 @@ export default function RecetaDetailPage() {
         </div>
       }
     >
-      {recipe && (
+      {recipe && (() => {
+        const c = getColors(recipe.meal_type);
+        return (
         <div>
           {/* Back link */}
           <Link
             href="/recetas"
-            className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-primary"
+            className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
           >
             <svg
               className="h-4 w-4"
@@ -222,17 +228,17 @@ export default function RecetaDetailPage() {
                 <button
                   onClick={() => setServings(Math.max(1, servings - 1))}
                   disabled={servings <= 1}
-                  className="flex h-7 w-7 items-center justify-center rounded-l-lg border border-border bg-card text-sm font-semibold transition-all hover:bg-primary-light/30 disabled:opacity-30 sm:h-9 sm:w-9 sm:rounded-l-xl sm:text-lg"
+                  className={`flex h-7 w-7 items-center justify-center rounded-l-lg border border-border bg-card text-sm font-semibold transition-all disabled:opacity-30 sm:h-9 sm:w-9 sm:rounded-l-xl sm:text-lg hover:opacity-80 ${c.text}`}
                 >
                   −
                 </button>
-                <span className="flex h-7 w-8 items-center justify-center border-y border-border bg-primary text-xs font-bold text-white sm:h-9 sm:w-10 sm:text-sm">
+                <span className={`flex h-7 w-8 items-center justify-center border-y border-border text-xs font-bold sm:h-9 sm:w-10 sm:text-sm ${c.bgLight} ${c.text}`}>
                   {servings}
                 </span>
                 <button
                   onClick={() => setServings(Math.min(8, servings + 1))}
                   disabled={servings >= 8}
-                  className="flex h-7 w-7 items-center justify-center rounded-r-lg border border-border bg-card text-sm font-semibold transition-all hover:bg-primary-light/30 disabled:opacity-30 sm:h-9 sm:w-9 sm:rounded-r-xl sm:text-lg"
+                  className={`flex h-7 w-7 items-center justify-center rounded-r-lg border border-border bg-card text-sm font-semibold transition-all disabled:opacity-30 sm:h-9 sm:w-9 sm:rounded-r-xl sm:text-lg hover:opacity-80 ${c.text}`}
                 >
                   +
                 </button>
@@ -240,7 +246,7 @@ export default function RecetaDetailPage() {
               <button
                 onClick={handleAddToShoppingList}
                 disabled={addingToList}
-                className="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-olive px-4 py-1.5 text-xs font-semibold text-white shadow-sm shadow-olive/20 transition-all hover:bg-olive/90 disabled:opacity-50 sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-2 sm:text-sm"
+                className={`ml-auto inline-flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-xs font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50 sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-2 sm:text-sm ${c.bg} ${c.shadow}`}
               >
                 {addingToList ? "Añadiendo..." : "+ Añadir"}
               </button>
@@ -253,7 +259,7 @@ export default function RecetaDetailPage() {
           {recipe.ingredients.length > 0 && (
             <section>
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-saffron/15 text-saffron">
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${c.bgLight} ${c.text}`}>
                   <svg
                     className="h-4 w-4"
                     fill="none"
@@ -276,7 +282,7 @@ export default function RecetaDetailPage() {
                     key={ing.id}
                     className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:bg-card-hover"
                   >
-                    <span className="text-sm font-semibold text-primary">
+                    <span className={`text-sm font-semibold ${c.text}`}>
                       {ing.quantity > 0 &&
                         `${formatQty(ing.quantity * servings)} ${ing.unit}`}
                     </span>
@@ -291,7 +297,7 @@ export default function RecetaDetailPage() {
           {recipe.steps.length > 0 && (
             <section className="mt-10">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-olive/10 text-olive">
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${c.bgLight} ${c.text}`}>
                   <svg
                     className="h-4 w-4"
                     fill="none"
@@ -311,7 +317,7 @@ export default function RecetaDetailPage() {
               <ol className="mt-4 space-y-4">
                 {recipe.steps.map((step, i) => (
                   <li key={step.id} className="flex gap-4">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-olive text-sm font-bold text-white shadow-sm">
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm ${c.bg}`}>
                       {i + 1}
                     </span>
                     <p className="pt-1 leading-relaxed text-foreground/90">
@@ -368,7 +374,8 @@ export default function RecetaDetailPage() {
 
           {toast && <Toast message={toast} onClose={() => setToast(null)} />}
         </div>
-      )}
+        );
+      })()}
     </Skeleton>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Recipe } from "@/types/database";
+import { getColors } from "@/lib/mealColors";
 
 const mealTypeLabels: Record<string, string> = {
   comida: "Comida",
@@ -26,9 +27,9 @@ const mealTypeStyles: Record<
     icon: "M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z",
   },
   postre: {
-    bg: "bg-saffron/15",
-    text: "text-saffron",
-    icon: "M12 8a4 4 0 100 8 4 4 0 000-8zM12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41",
+    bg: "bg-rose/15",
+    text: "text-rose",
+    icon: "M12 8c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zM9 2l.5 3h5L15 2M12 22c-1.1 0-2-.9-2-2h4c0 1.1-.9 2-2 2z",
   },
 };
 
@@ -42,13 +43,16 @@ function AddToListButton({
   recipeId,
   onAdded,
   compact = false,
+  mealType = "comida",
 }: {
   recipeId: string;
   onAdded?: () => void;
   compact?: boolean;
+  mealType?: string;
 }) {
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const colors = getColors(mealType);
 
   async function handleAdd(e: React.MouseEvent) {
     e.preventDefault();
@@ -75,8 +79,8 @@ function AddToListButton({
       title={added ? "Añadido" : "Añadir a la lista de compra"}
       className={`inline-flex items-center justify-center rounded-xl transition-all ${
         added
-          ? "bg-olive/15 text-olive"
-          : "bg-olive/10 text-olive hover:bg-olive/20"
+          ? `${colors.bgLight} ${colors.text}`
+          : `${colors.bgLight} ${colors.text} hover:opacity-80`
       } ${compact ? "h-8 w-8" : "gap-1.5 px-3 py-1.5 text-xs font-medium"} disabled:opacity-50`}
     >
       {adding ? (
@@ -141,9 +145,11 @@ export default function RecipeCard({
   const style = mealTypeStyles[recipe.meal_type] ?? mealTypeStyles.comida;
   const compact = viewMode === "grid-compact";
 
+  const colors = getColors(recipe.meal_type);
+
   if (viewMode === "list") {
     return (
-      <div className="group relative flex h-28 overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/20 hover:shadow-md">
+      <div className={`group relative flex h-28 overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:shadow-md hover:${colors.border}`}>
         <Link href={`/recetas/${recipe.id}`} className="flex min-w-0 flex-1">
           <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-primary-light/30 sm:w-32">
             {recipe.image_url ? (
@@ -197,7 +203,7 @@ export default function RecipeCard({
                 </span>
               )}
             </div>
-            <h3 className="line-clamp-2 font-heading text-base font-semibold leading-tight group-hover:text-primary sm:line-clamp-1 sm:text-lg sm:leading-snug">
+            <h3 className="line-clamp-2 font-heading text-base font-semibold leading-tight sm:line-clamp-1 sm:text-lg sm:leading-snug">
               {recipe.title}
             </h3>
             {recipe.description && (
@@ -211,6 +217,7 @@ export default function RecipeCard({
           <AddToListButton
             recipeId={recipe.id}
             onAdded={onAddedToList}
+            mealType={recipe.meal_type}
             compact
           />
         </div>
@@ -220,7 +227,7 @@ export default function RecipeCard({
 
   return (
     <div
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/20 hover:shadow-md ${compact ? "h-52 sm:h-[28rem]" : "h-[24rem] sm:h-[28rem]"}`}
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:shadow-md hover:${colors.border} ${compact ? "h-52 sm:h-[28rem]" : "h-[24rem] sm:h-[28rem]"}`}
     >
       <Link href={`/recetas/${recipe.id}`} className="flex h-full flex-col">
         <div
@@ -305,12 +312,13 @@ export default function RecipeCard({
               <AddToListButton
                 recipeId={recipe.id}
                 onAdded={onAddedToList}
+                mealType={recipe.meal_type}
                 compact
               />
             </span>
           </div>
           <h3
-            className={`line-clamp-2 font-heading font-semibold leading-tight group-hover:text-primary ${compact ? "text-sm sm:text-lg" : "text-lg sm:text-xl"}`}
+            className={`line-clamp-2 font-heading font-semibold leading-tight ${compact ? "text-sm sm:text-lg" : "text-lg sm:text-xl"}`}
           >
             {recipe.title}
           </h3>

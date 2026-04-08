@@ -14,6 +14,8 @@
   --saffron-light: #f5ecd6;
   --night: #4a6fa5;
   --night-light: #d6e0f0;
+  --rose: #c45b84;
+  --rose-light: #f4d3e0;
   --muted: #8b7e74;
   --border: #e8ddd3;
   --card: #fffaf5;
@@ -34,6 +36,8 @@
   --color-saffron-light: var(--saffron-light);
   --color-night: var(--night);
   --color-night-light: var(--night-light);
+  --color-rose: var(--rose);
+  --color-rose-light: var(--rose-light);
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-card: var(--card);

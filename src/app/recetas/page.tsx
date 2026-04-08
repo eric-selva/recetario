@@ -6,6 +6,7 @@ import { Skeleton } from "boneyard-js/react";
 import RecipeCard from "@/components/RecipeCard";
 import SlidingFilter from "@/components/SlidingFilter";
 import { cachedFetch, invalidateCache } from "@/lib/fetchCache";
+import { getColors } from "@/lib/mealColors";
 import type { Recipe } from "@/types/database";
 
 const mealTypes = [
@@ -36,7 +37,12 @@ export default function RecetasPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
-  const [mealType, setMealType] = useState("comida");
+  const [mealType, setMealType] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("recetas-tab") || "comida";
+    }
+    return "comida";
+  });
   const [search, setSearch] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -57,6 +63,10 @@ export default function RecetasPage() {
   useEffect(() => {
     localStorage.setItem("recetas-view", viewMode);
   }, [viewMode]);
+
+  useEffect(() => {
+    localStorage.setItem("recetas-tab", mealType);
+  }, [mealType]);
 
   // Build URL for api call
   const buildUrl = useCallback(
@@ -120,13 +130,13 @@ export default function RecetasPage() {
     return () => observer.disconnect();
   }, [loading, hasMore]);
 
-  const isCena = mealType === "cena";
-  const accentBg = isCena ? "bg-night" : "bg-primary";
-  const accentBgLight = isCena ? "bg-night/15" : "bg-primary/15";
-  const accentText = isCena ? "text-night" : "text-primary";
-  const accentShadow = isCena ? "shadow-night/20" : "shadow-primary/20";
-  const accentHover = isCena ? "hover:bg-night/80" : "hover:bg-primary-dark";
-  const accentRing = isCena ? "focus:border-night focus:ring-night/10" : "focus:border-primary focus:ring-primary/10";
+  const c = getColors(mealType);
+  const accentBg = c.bg;
+  const accentBgLight = c.bgLight;
+  const accentText = c.text;
+  const accentShadow = c.shadow;
+  const accentHover = c.hover;
+  const accentRing = c.ring;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -134,7 +144,7 @@ export default function RecetasPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2.5 font-heading text-3xl font-bold">
-            <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className={`h-8 w-8 ${accentText}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
             Recetas
@@ -296,7 +306,10 @@ export default function RecetasPage() {
           options={mealTypes}
           value={mealType}
           onChange={setMealType}
-          colorMap={{ cena: { bg: 'bg-night/15', text: 'text-night' } }}
+          colorMap={{
+            cena: { bg: 'bg-night/15', text: 'text-night' },
+            postre: { bg: 'bg-rose/15', text: 'text-rose' },
+          }}
         />
       </div>
 

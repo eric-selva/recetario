@@ -573,7 +573,7 @@ function CongeladorTab() {
   const mealTypeStyles: Record<string, string> = {
     comida: "bg-primary/10 text-primary",
     cena: "bg-night/10 text-night",
-    postre: "bg-saffron/15 text-saffron",
+    postre: "bg-rose/15 text-rose",
   };
 
   const mealTypeLabels: Record<string, string> = {
@@ -585,7 +585,7 @@ function CongeladorTab() {
   const tupperLidColors: Record<string, string> = {
     comida: "bg-primary/30",
     cena: "bg-night/30",
-    postre: "bg-saffron/30",
+    postre: "bg-rose/30",
   };
 
   const totalItems = items.length + extras.length;
