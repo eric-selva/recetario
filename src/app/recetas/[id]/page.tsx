@@ -38,7 +38,10 @@ export default function RecetaDetailPage() {
       })
       .then((data) => {
         setRecipe(data);
-        if (data?.meal_type) localStorage.setItem("recetas-tab", data.meal_type);
+        if (data?.meal_type) {
+          localStorage.setItem("recetas-tab", data.meal_type);
+          setServings(data.meal_type === "comida" ? 4 : 2);
+        }
       })
       .catch(() => setRecipe(null))
       .finally(() => setLoading(false));
