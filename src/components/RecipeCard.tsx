@@ -178,14 +178,14 @@ export default function RecipeCard({
             )}
           </div>
           <div className="flex min-w-0 flex-1 flex-col justify-center px-3 pr-12">
-            <div className="mb-0.5 flex items-center gap-1.5">
+            <div className="mb-0.5 flex items-center gap-1.5 overflow-hidden">
               <span
-                className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium ${style.bg} ${style.text}`}
+                className={`inline-flex shrink-0 items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium ${style.bg} ${style.text}`}
               >
                 {mealTypeLabels[recipe.meal_type]}
               </span>
               {recipe.prep_time > 0 && (
-                <span className="flex items-center gap-0.5 text-[10px] text-muted">
+                <span className="flex shrink-0 items-center gap-0.5 text-[10px] text-muted">
                   <svg
                     className="h-2.5 w-2.5"
                     fill="none"
@@ -203,7 +203,7 @@ export default function RecipeCard({
                 </span>
               )}
               {recipe.calories != null && recipe.calories > 0 && (
-                <span className="flex items-center gap-0.5 text-[10px] text-muted">
+                <span className="flex shrink-0 items-center gap-0.5 text-[10px] text-muted">
                   <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1.001A3.75 3.75 0 0012 18z" />

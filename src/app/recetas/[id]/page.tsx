@@ -211,7 +211,7 @@ export default function RecetaDetailPage() {
               )}
             </div>
 
-            <h1 className="mt-4 font-heading text-3xl font-bold sm:text-4xl">
+            <h1 className="mt-4 font-heading text-3xl font-bold leading-tight sm:text-4xl">
               {recipe.title}
             </h1>
             {recipe.description && (
