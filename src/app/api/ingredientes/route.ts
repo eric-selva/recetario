@@ -1,8 +1,11 @@
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/server";
 import type { NextRequest } from "next/server";
 
 // GET /api/ingredientes?search=xxx — search catalog entries (paginated)
 export async function GET(request: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const search = request.nextUrl.searchParams
     .get("search")
     ?.toLowerCase()

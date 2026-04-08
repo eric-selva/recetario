@@ -5,43 +5,69 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 
-export default function LoginPage() {
+export default function RegistroPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<"loading" | "valid" | "invalid">("loading");
   const [error, setError] = useState(false);
   const supabase = createClient();
+  const token = searchParams.get("token");
 
   useEffect(() => {
-    const err = searchParams.get("error");
-    if (err) {
-      setError(true);
-      if (err !== "no-invitation") {
-        setTimeout(() => setError(false), 3000);
-      }
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
+    // If already logged in, go to recetas
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         router.replace("/recetas");
-      } else {
-        setLoading(false);
+        return;
       }
+
+      if (!token) {
+        setStatus("invalid");
+        return;
+      }
+
+      // Validate token
+      fetch(`/api/registro/validate?token=${token}`)
+        .then((res) => setStatus(res.ok ? "valid" : "invalid"))
+        .catch(() => setStatus("invalid"));
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function handleGoogleLogin() {
+  async function handleGoogleSignup() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?token=${token}`,
       },
     });
   }
 
-  if (loading) return null;
+  if (status === "loading") return null;
+
+  if (status === "invalid") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-4 text-center">
+        <Image
+          src="/recetario-logo.png"
+          alt="Recetario"
+          width={90}
+          height={90}
+          className="mb-6"
+          priority
+        />
+        <h1 className="font-heading text-2xl font-bold">Invitacion no valida</h1>
+        <p className="mt-2 text-sm text-muted">
+          Este enlace ha expirado o ya ha sido utilizado.
+        </p>
+        <button
+          onClick={() => router.push("/")}
+          className="mt-6 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primary-dark"
+        >
+          Ir al inicio
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
@@ -54,12 +80,13 @@ export default function LoginPage() {
         priority
       />
 
+      <h1 className="font-heading text-2xl font-bold">Te han invitado</h1>
       <p className="mt-2 text-sm text-muted">
-        Tu cocina, tus recetas, tu sabor
+        Crea tu cuenta para acceder al recetario
       </p>
 
       <button
-        onClick={handleGoogleLogin}
+        onClick={handleGoogleSignup}
         className="mt-8 flex w-full max-w-xs items-center justify-center gap-3 rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold transition-all hover:bg-card-hover hover:shadow-md"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -80,14 +107,12 @@ export default function LoginPage() {
             fill="#EA4335"
           />
         </svg>
-        Iniciar sesion con Google
+        Registrarse con Google
       </button>
 
       {error && (
         <p className="mt-4 text-center text-sm text-red-500">
-          {searchParams.get("error") === "no-invitation"
-            ? "Necesitas una invitacion para registrarte."
-            : "Error al iniciar sesion. Intentalo de nuevo."}
+          Error al registrarse. Intentalo de nuevo.
         </p>
       )}
     </div>

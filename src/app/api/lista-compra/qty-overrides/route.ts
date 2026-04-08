@@ -1,8 +1,11 @@
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import type { NextRequest } from 'next/server'
 
 // GET /api/lista-compra/qty-overrides
 export async function GET() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   const { data, error } = await supabase
     .from('shopping_qty_overrides')
     .select('*')
@@ -16,6 +19,9 @@ export async function GET() {
 
 // PUT /api/lista-compra/qty-overrides — upsert an override
 export async function PUT(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   const { ingredient_key, quantity } = await request.json()
 
   const { error } = await supabase
@@ -34,6 +40,9 @@ export async function PUT(request: NextRequest) {
 
 // DELETE /api/lista-compra/qty-overrides?key=xxx or DELETE all
 export async function DELETE(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   const key = request.nextUrl.searchParams.get('key')
 
   if (key) {

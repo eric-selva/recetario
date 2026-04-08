@@ -1,8 +1,11 @@
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import type { NextRequest } from 'next/server'
 
 // GET /api/despensa?location=nevera|congelador
 export async function GET(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   const location = request.nextUrl.searchParams.get('location') || 'nevera'
 
   const { data: items, error } = await supabase
@@ -52,6 +55,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/despensa — add item
 export async function POST(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await request.json()
   const { location, name, quantity, unit, recipe_id, servings } = body
 
@@ -61,7 +67,7 @@ export async function POST(request: NextRequest) {
     row.unit = unit ?? 'unidad'
 
     // Resolve catalog_id (source of truth for name)
-    const catalogId = await resolveCatalogId(name, unit ?? 'unidad')
+    const catalogId = await resolveCatalogId(supabase, name, unit ?? 'unidad')
     if (catalogId) row.catalog_id = catalogId
   } else {
     row.recipe_id = recipe_id
@@ -83,6 +89,9 @@ export async function POST(request: NextRequest) {
 
 // PATCH /api/despensa — update servings or quantity
 export async function PATCH(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   const { id, servings, quantity } = await request.json()
 
   const update: Record<string, unknown> = {}
@@ -103,6 +112,9 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE /api/despensa?id=xxx or DELETE all for location
 export async function DELETE(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   const id = request.nextUrl.searchParams.get('id')
   const location = request.nextUrl.searchParams.get('location')
 
@@ -119,6 +131,7 @@ export async function DELETE(request: NextRequest) {
 
 // Look up or create a catalog entry, returns catalog ID
 async function resolveCatalogId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
   name: string,
   unit: string,
 ): Promise<string | null> {

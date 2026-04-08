@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import { useSession } from "@/hooks/useSession";
 
 const navLinks = [
   {
@@ -38,6 +39,7 @@ const navLinks = [
 
 export default function Header() {
   const pathname = usePathname();
+  const { user, isAdmin, signOut } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -55,8 +57,8 @@ export default function Header() {
     setMenuOpen(false);
   }, [pathname]);
 
-  // Hide header on the home page
-  if (pathname === "/") return null;
+  // Hide header on login and registration pages
+  if (pathname === "/" || pathname === "/registro") return null;
 
   function isActive(href: string) {
     return href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -98,6 +100,37 @@ export default function Header() {
             </Link>
           ))}
         </nav>
+
+        {/* Admin + Logout (desktop) */}
+        <div className="hidden items-center gap-1 sm:flex">
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className={`rounded-xl p-2 transition-all ${
+                isActive("/admin")
+                  ? "bg-primary text-white"
+                  : "text-muted hover:bg-primary-light hover:text-primary"
+              }`}
+              title="Admin"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </Link>
+          )}
+          {user && (
+            <button
+              onClick={signOut}
+              className="rounded-xl p-2 text-muted transition-all hover:bg-primary-light hover:text-primary"
+              title="Cerrar sesion"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+            </button>
+          )}
+        </div>
 
         {/* Mobile menu button — spoon/fork icon */}
         <button
@@ -151,6 +184,33 @@ export default function Header() {
                 )}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className={`flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-medium transition-all ${
+                  isActive("/admin")
+                    ? "bg-primary text-white"
+                    : "text-muted hover:bg-primary-light hover:text-primary"
+                }`}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="flex-1 text-left">Admin</span>
+              </Link>
+            )}
+            {user && (
+              <button
+                onClick={signOut}
+                className="flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-medium text-muted hover:bg-primary-light hover:text-primary transition-all"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                </svg>
+                <span className="flex-1 text-left">Cerrar sesion</span>
+              </button>
+            )}
           </div>
         </nav>
       </div>

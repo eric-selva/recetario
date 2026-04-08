@@ -1,8 +1,11 @@
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import type { NextRequest } from 'next/server'
 
 // GET /api/lista-compra — get shopping list with recipe details and ingredients
 export async function GET() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   const { data: items, error } = await supabase
     .from('shopping_list')
     .select('*')
@@ -60,6 +63,9 @@ export async function GET() {
 
 // POST /api/lista-compra — add a recipe to shopping list
 export async function POST(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   const { recipe_id, servings = 4 } = await request.json()
 
   const { data, error } = await supabase
@@ -77,6 +83,9 @@ export async function POST(request: NextRequest) {
 
 // DELETE /api/lista-compra — clear entire list or remove one item
 export async function DELETE(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   const { searchParams } = request.nextUrl
   const itemId = searchParams.get('id')
 

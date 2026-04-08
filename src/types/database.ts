@@ -11,6 +11,7 @@ export interface Recipe {
   prep_time: number
   calories?: number | null
   servings: number
+  owner_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -64,6 +65,7 @@ export interface PantryItem {
 }
 
 export interface RecipeWithDetails extends Recipe {
+  is_owner?: boolean
   ingredients: Ingredient[]
   steps: Step[]
 }

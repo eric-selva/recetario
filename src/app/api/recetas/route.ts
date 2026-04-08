@@ -1,17 +1,33 @@
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/server";
 import type { NextRequest } from "next/server";
 
 // GET /api/recetas — list recipes (with optional filters + pagination)
 export async function GET(request: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = request.nextUrl;
   const mealType = searchParams.get("meal_type");
   const search = searchParams.get("search");
   const limit = Math.min(Number(searchParams.get("limit")) || 10, 50);
   const offset = Math.max(Number(searchParams.get("offset")) || 0, 0);
 
+  // Get recipe IDs linked to the user
+  const { data: userRecipes } = await supabase
+    .from("user_recipes")
+    .select("recipe_id")
+    .eq("user_id", user.id);
+
+  const linkedIds = (userRecipes || []).map((ur) => ur.recipe_id);
+  if (linkedIds.length === 0) {
+    return Response.json({ data: [], total: 0 });
+  }
+
   let query = supabase
     .from("recipes")
     .select("*", { count: "exact" })
+    .in("id", linkedIds)
     .order("title", { ascending: true });
 
   if (mealType && mealType !== "todas") {
@@ -23,10 +39,10 @@ export async function GET(request: NextRequest) {
   if (search && search.trim()) {
     const term = search.toLowerCase().trim();
 
-    // Fetch all (no pagination) for search—we filter in-memory
     const { data: allRecipes, error } = await supabase
       .from("recipes")
       .select("*")
+      .in("id", linkedIds)
       .order("title", { ascending: true })
       .then((res) => {
         if (res.error) return res;
@@ -84,6 +100,10 @@ export async function GET(request: NextRequest) {
 
 // POST /api/recetas — create a new recipe with ingredients and steps
 export async function POST(request: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
   const body = await request.json();
   const {
     title,
@@ -92,14 +112,15 @@ export async function POST(request: NextRequest) {
     meal_type,
     prep_time,
     servings,
+    calories,
     ingredients,
     steps,
   } = body;
 
-  // Insert recipe
+  // Insert recipe with owner
   const { data: recipe, error: recipeError } = await supabase
     .from("recipes")
-    .insert({ title, description, image_url, meal_type, prep_time, servings })
+    .insert({ title, description, image_url, meal_type, prep_time, servings, calories, owner_id: user.id })
     .select()
     .single();
 
@@ -107,9 +128,11 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: recipeError.message }, { status: 500 });
   }
 
+  // Link recipe to user
+  await supabase.from("user_recipes").insert({ user_id: user.id, recipe_id: recipe.id });
+
   // Insert ingredients
   if (ingredients?.length) {
-    // Resolve catalog IDs for each ingredient
     const ingredientRows = [];
     for (let i = 0; i < ingredients.length; i++) {
       const ing = ingredients[i] as {
@@ -120,8 +143,8 @@ export async function POST(request: NextRequest) {
         catalog_id?: string;
       };
 
-      // Use provided catalog_id or look up / create catalog entry
       const catalogId = ing.catalog_id ?? await resolveCatalogId(
+        supabase,
         ing.name,
         ing.unit,
         ing.shoppable,
@@ -163,13 +186,13 @@ export async function POST(request: NextRequest) {
 
 // Look up or create a catalog entry, returns catalog ID
 async function resolveCatalogId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
   name: string,
   unit: string,
   shoppable?: boolean,
 ): Promise<string | null> {
   const trimmed = name.trim();
 
-  // Try to find existing
   const { data: existing } = await supabase
     .from("catalog")
     .select("id")
@@ -179,7 +202,6 @@ async function resolveCatalogId(
 
   if (existing) return existing.id;
 
-  // Create new catalog entry
   const { data: created } = await supabase
     .from("catalog")
     .insert({

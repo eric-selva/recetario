@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import Header from "@/components/Header";
-import AuthGate from "@/components/AuthGate";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -29,14 +28,12 @@ export default function RootLayout({
   return (
     <html lang="es" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
-        <AuthGate>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <footer className="border-t border-border bg-card/50 py-6 text-center text-xs text-muted">
-            <div className="divider-herbs mb-4" />
-            <span className="font-brand text-sm font-semibold bg-gradient-to-r from-primary via-saffron to-olive bg-clip-text text-transparent">Recetario</span> &mdash; Cocina con amor
-          </footer>
-        </AuthGate>
+        <Header />
+        <main className="flex-1">{children}</main>
+        <footer className="border-t border-border bg-card/50 py-6 text-center text-xs text-muted">
+          <div className="divider-herbs mb-4" />
+          <span className="font-brand text-sm font-semibold bg-gradient-to-r from-primary via-saffron to-olive bg-clip-text text-transparent">Recetario</span> &mdash; Cocina con amor
+        </footer>
       </body>
     </html>
   );

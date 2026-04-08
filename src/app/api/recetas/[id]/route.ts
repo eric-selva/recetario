@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import type { NextRequest } from 'next/server'
 
 // GET /api/recetas/[id] — get recipe with ingredients and steps
@@ -6,7 +6,23 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { id } = await params
+
+  // Verify user has access to this recipe
+  const { data: link } = await supabase
+    .from('user_recipes')
+    .select('recipe_id')
+    .eq('user_id', user.id)
+    .eq('recipe_id', id)
+    .single()
+
+  if (!link) {
+    return Response.json({ error: 'Receta no encontrada' }, { status: 404 })
+  }
 
   const [recipeRes, ingredientsRes, stepsRes] = await Promise.all([
     supabase.from('recipes').select('*').eq('id', id).single(),
@@ -18,7 +34,6 @@ export async function GET(
     return Response.json({ error: 'Receta no encontrada' }, { status: 404 })
   }
 
-  // Enrich ingredients with catalog data
   const ingredients = (ingredientsRes.data || []).map((ing) => {
     const catalog = ing.catalog as { id: string; name: string; shoppable: boolean } | null
     return {
@@ -35,21 +50,41 @@ export async function GET(
 
   return Response.json({
     ...recipeRes.data,
+    is_owner: recipeRes.data.owner_id === user.id || recipeRes.data.owner_id === null,
     ingredients,
     steps: stepsRes.data || [],
   })
 }
 
-// PUT /api/recetas/[id] — update recipe
+// PUT /api/recetas/[id] — update recipe (owner only)
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { id } = await params
+
+  // Check ownership
+  const { data: recipe } = await supabase
+    .from('recipes')
+    .select('owner_id')
+    .eq('id', id)
+    .single()
+
+  if (!recipe) {
+    return Response.json({ error: 'Receta no encontrada' }, { status: 404 })
+  }
+
+  if (recipe.owner_id !== null && recipe.owner_id !== user.id) {
+    return Response.json({ error: 'No tienes permiso para editar esta receta' }, { status: 403 })
+  }
+
   const body = await request.json()
   const { title, description, image_url, meal_type, prep_time, servings, calories, ingredients, steps } = body
 
-  // Update recipe
   const { error: recipeError } = await supabase
     .from('recipes')
     .update({ title, description, image_url, meal_type, prep_time, servings, calories })
@@ -59,7 +94,7 @@ export async function PUT(
     return Response.json({ error: recipeError.message }, { status: 500 })
   }
 
-  // Replace ingredients: delete old, insert new
+  // Replace ingredients
   if (ingredients) {
     await supabase.from('ingredients').delete().eq('recipe_id', id)
     if (ingredients.length) {
@@ -72,7 +107,7 @@ export async function PUT(
           shoppable?: boolean
           catalog_id?: string
         }
-        const catalogId = ing.catalog_id ?? await resolveCatalogId(ing.name, ing.unit, ing.shoppable)
+        const catalogId = ing.catalog_id ?? await resolveCatalogId(supabase, ing.name, ing.unit, ing.shoppable)
         ingredientRows.push({
           recipe_id: id,
           catalog_id: catalogId,
@@ -85,7 +120,7 @@ export async function PUT(
     }
   }
 
-  // Replace steps: delete old, insert new
+  // Replace steps
   if (steps) {
     await supabase.from('steps').delete().eq('recipe_id', id)
     if (steps.length) {
@@ -101,31 +136,53 @@ export async function PUT(
   return Response.json({ success: true })
 }
 
-// DELETE /api/recetas/[id] — delete recipe (cascade deletes ingredients, steps, shopping_list)
+// DELETE /api/recetas/[id] — delete recipe or unlink
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { id } = await params
 
-  const { error } = await supabase.from('recipes').delete().eq('id', id)
+  // Check ownership
+  const { data: recipe } = await supabase
+    .from('recipes')
+    .select('owner_id')
+    .eq('id', id)
+    .single()
 
-  if (error) {
-    return Response.json({ error: error.message }, { status: 500 })
+  if (!recipe) {
+    return Response.json({ error: 'Receta no encontrada' }, { status: 404 })
+  }
+
+  if (recipe.owner_id === user.id || recipe.owner_id === null) {
+    // Owner or legacy recipe — full delete (cascade handles ingredients, steps, etc.)
+    const { error } = await supabase.from('recipes').delete().eq('id', id)
+    if (error) return Response.json({ error: error.message }, { status: 500 })
+  } else {
+    // Not owner — just unlink from user
+    const { error } = await supabase
+      .from('user_recipes')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('recipe_id', id)
+    if (error) return Response.json({ error: error.message }, { status: 500 })
   }
 
   return Response.json({ success: true })
 }
 
-// Look up or create a catalog entry, returns catalog ID
 async function resolveCatalogId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
   name: string,
   unit: string,
   shoppable?: boolean,
 ): Promise<string | null> {
   const trimmed = name.trim()
 
-  // Try to find existing
   const { data: existing } = await supabase
     .from('catalog')
     .select('id')
@@ -135,7 +192,6 @@ async function resolveCatalogId(
 
   if (existing) return existing.id
 
-  // Create new catalog entry
   const { data: created } = await supabase
     .from('catalog')
     .insert({
