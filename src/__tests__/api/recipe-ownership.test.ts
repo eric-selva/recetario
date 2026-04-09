@@ -22,9 +22,11 @@ const mockSupabase = {
       return {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({
-              data: userHasLink ? { recipe_id: 'recipe-1' } : null,
-              error: userHasLink ? null : { message: 'Not found' },
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: userHasLink ? { recipe_id: 'recipe-1' } : null,
+                error: userHasLink ? null : { message: 'Not found' },
+              }),
             }),
           }),
         }),

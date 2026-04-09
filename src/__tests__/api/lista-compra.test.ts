@@ -3,10 +3,11 @@ import { NextRequest } from 'next/server'
 
 const mockFrom = vi.fn()
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn().mockResolvedValue({
+    auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'u1', email: 'test@test.com' } }, error: null }) },
     from: (...args: unknown[]) => mockFrom(...args),
-  },
+  }),
 }))
 
 describe('API /api/lista-compra', () => {

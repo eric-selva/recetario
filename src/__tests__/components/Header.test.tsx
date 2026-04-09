@@ -8,14 +8,33 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/recetas',
 }))
 
+// Mock supabase client (used by useSession)
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: vi.fn(() => ({
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'u1', email: 'test@test.com' } }, error: null }),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+      signOut: vi.fn().mockResolvedValue({ error: null }),
+    },
+    from: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { is_admin: false }, error: null }),
+        }),
+      }),
+    }),
+  })),
+}))
+
 describe('Header', () => {
   beforeEach(() => {
     mockFetch({ '/api/lista-compra': [] })
   })
 
-  it('renders the logo', () => {
+  it('renders the logo image', () => {
     render(<Header />)
-    expect(screen.getByText('Recetario')).toBeInTheDocument()
+    const logo = screen.getByAltText('Recetario')
+    expect(logo).toBeInTheDocument()
   })
 
   it('renders all navigation links', () => {
@@ -29,10 +48,8 @@ describe('Header', () => {
     render(<Header />)
     const button = screen.getByLabelText('Abrir menu')
 
-    // Menu should not be visible initially (mobile nav links are in the DOM but in the desktop nav)
     fireEvent.click(button)
 
-    // After click, mobile menu should show nav links
     const allRecetasLinks = screen.getAllByText('Recetas')
     expect(allRecetasLinks.length).toBeGreaterThanOrEqual(2) // Desktop + mobile
   })
@@ -41,9 +58,10 @@ describe('Header', () => {
     mockFetch({ '/api/lista-compra': [{ id: '1', recipe_id: 'r1' }, { id: '2', recipe_id: 'r2' }] })
     render(<Header />)
 
-    // Wait for fetch to resolve
     await vi.waitFor(() => {
-      expect(screen.getByText('2')).toBeInTheDocument()
+      // Badge appears in both desktop and mobile nav
+      const badges = screen.getAllByText('2')
+      expect(badges.length).toBeGreaterThanOrEqual(1)
     })
   })
 })

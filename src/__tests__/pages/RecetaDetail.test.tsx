@@ -11,6 +11,8 @@ const mockRecipe = {
   meal_type: 'comida',
   prep_time: 90,
   servings: 2,
+  calories: 500,
+  is_owner: true,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
   ingredients: [
@@ -97,7 +99,7 @@ describe('Receta Detail Page', () => {
   it('renders action buttons', async () => {
     render(<RecetaDetailPage />)
     await waitFor(() => {
-      expect(screen.getByText(/Añadir a la lista de compra/)).toBeInTheDocument()
+      expect(screen.getByText(/Añadir/)).toBeInTheDocument()
       expect(screen.getByText('Editar')).toBeInTheDocument()
       expect(screen.getByText('Eliminar')).toBeInTheDocument()
     })
@@ -113,10 +115,10 @@ describe('Receta Detail Page', () => {
   it('shows toast when adding to shopping list', async () => {
     render(<RecetaDetailPage />)
     await waitFor(() => {
-      expect(screen.getByText(/Añadir a la lista de compra/)).toBeInTheDocument()
+      expect(screen.getByText(/Añadir/)).toBeInTheDocument()
     })
 
-    fireEvent.click(screen.getByText(/Añadir a la lista de compra/))
+    fireEvent.click(screen.getByText('+ Añadir'))
 
     await waitFor(() => {
       expect(screen.getByText('Receta añadida a la lista de compra')).toBeInTheDocument()

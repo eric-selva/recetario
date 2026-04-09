@@ -45,11 +45,15 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn().mockResolvedValue(mockSupabase),
 }))
 
-vi.mock('crypto', () => ({
-  randomBytes: vi.fn(() => ({
-    toString: () => 'test-token-abc123',
-  })),
-}))
+vi.mock('crypto', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('crypto')>()
+  return {
+    ...actual,
+    randomBytes: vi.fn(() => ({
+      toString: () => 'test-token-abc123',
+    })),
+  }
+})
 
 describe('Admin invitations API', () => {
   beforeEach(() => {
