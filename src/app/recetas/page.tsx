@@ -37,12 +37,16 @@ export default function RecetasPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
-  const [mealType, setMealType] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("recetas-tab") || "comida";
+  const [mealType, setMealType] = useState("comida");
+  const [tabRestored, setTabRestored] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("recetas-tab");
+    if (saved && saved !== mealType) {
+      setMealType(saved);
     }
-    return "comida";
-  });
+    setTabRestored(true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [search, setSearch] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -81,8 +85,9 @@ export default function RecetasPage() {
     [mealType, searchDebounced],
   );
 
-  // Initial load (reset on filter/search change)
+  // Initial load (reset on filter/search change) — wait for tab to be restored
   useEffect(() => {
+    if (!tabRestored) return;
     setLoading(true);
     setOffset(0);
 
@@ -93,7 +98,7 @@ export default function RecetasPage() {
         setHasMore(data.length < (res.total ?? 0));
       })
       .finally(() => setLoading(false));
-  }, [buildUrl]);
+  }, [buildUrl, tabRestored]);
 
   // Load more
   const loadMore = useCallback(() => {
