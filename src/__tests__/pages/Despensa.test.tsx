@@ -80,6 +80,14 @@ describe('Despensa Page', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Zanahoria')).toBeInTheDocument()
+    })
+
+    // The selector lives in the DOM (always rendered for the entry/exit
+    // animation) but is collapsed via max-w-0 + opacity-0. After clicking
+    // the title, the wrapper switches to the expanded classes.
+    fireEvent.click(screen.getByText('Zanahoria'))
+
+    await waitFor(() => {
       expect(screen.getByText('2')).toBeInTheDocument()
       expect(screen.getByText('−')).toBeInTheDocument()
       expect(screen.getByText('+')).toBeInTheDocument()

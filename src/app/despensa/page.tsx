@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+  type ReactNode,
+} from "react";
 import SlidingFilter from "@/components/SlidingFilter";
 import { cachedFetch, invalidateCache } from "@/lib/fetchCache";
 
@@ -89,6 +97,10 @@ function NeveraTab() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Direction the selector should grow when expanding. Decided per-click
+  // by measuring whether a rightward growth would overflow the shelf area.
+  const [expandedDir, setExpandedDir] = useState<"right" | "left">("right");
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<IngredientSuggestion[]>([]);
   const [suggestionsTotal, setSuggestionsTotal] = useState(0);
@@ -96,6 +108,43 @@ function NeveraTab() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const shelfRef = useRef<HTMLDivElement>(null);
+
+  // Close the expanded item when the user clicks outside the shelf grid.
+  useEffect(() => {
+    if (expandedId === null) return;
+    function handleClick(e: MouseEvent) {
+      if (shelfRef.current && !shelfRef.current.contains(e.target as Node)) {
+        setExpandedId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [expandedId]);
+
+  // Approximate width of the selector chunk (− num + plus margin).
+  // Measured visually: 5+5+5+4+8 ≈ 60px on the small variant. Be generous
+  // so the overflow check stays conservative.
+  const SELECTOR_WIDTH = 90;
+
+  function toggleExpanded(itemId: string, pillEl: HTMLElement) {
+    if (expandedId === itemId) {
+      setExpandedId(null);
+      return;
+    }
+    // Decide which side to grow towards: if the pill's right edge plus the
+    // selector would overflow the shelf area, open to the left instead.
+    const container = shelfRef.current;
+    if (container) {
+      const pillRect = pillEl.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const fitsRight = pillRect.right + SELECTOR_WIDTH <= containerRect.right;
+      setExpandedDir(fitsRight ? "right" : "left");
+    } else {
+      setExpandedDir("right");
+    }
+    setExpandedId(itemId);
+  }
 
   const fetchItems = useCallback(() => {
     setLoading(true);
@@ -357,27 +406,38 @@ function NeveraTab() {
               Vaciar despensa
             </button>
           </div>
-          {/* Shelves — items wrap naturally, shelf plank under each row */}
-          <ShelfGrid>
+          {/* Shelves — items wrap naturally, shelf plank under each row.
+              Each item shows only its title until clicked; the quantity
+              selector then floats out to the right WITHOUT pushing siblings
+              (the in-flow placeholder reserves only the title-sized slot,
+              while the real pill is absolutely positioned and grows on top
+              of its neighbour). */}
+          <ShelfGrid ref={shelfRef}>
             {adding && (
               <div className="flex animate-pulse items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5 shadow-sm">
                 <div className="h-3 w-16 rounded bg-primary-light/25" />
                 <div className="ml-auto h-3 w-10 rounded bg-primary-light/20" />
               </div>
             )}
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className={`flex items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5 shadow-sm transition-opacity ${
-                  removingId === item.id ? "animate-pulse opacity-40" : ""
-                }`}
-              >
-                <span className="truncate text-xs font-bold capitalize">
-                  {item.name}
-                </span>
-                <div className="flex shrink-0 items-center gap-0.5">
+            {items.map((item) => {
+              const isExpanded = expandedId === item.id;
+              const openLeft = isExpanded && expandedDir === "left";
+              const selector = (
+                <div
+                  key="selector"
+                  onClick={(e) => e.stopPropagation()}
+                  className={`flex items-center gap-0.5 overflow-hidden transition-[max-width,opacity,margin-left,margin-right] duration-200 ease-out ${
+                    isExpanded
+                      ? openLeft
+                        ? "mr-1 max-w-[120px] opacity-100"
+                        : "ml-1 max-w-[120px] opacity-100"
+                      : "pointer-events-none mx-0 max-w-0 opacity-0"
+                  }`}
+                >
                   <button
-                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                    onClick={() =>
+                      updateQuantity(item.id, item.quantity - 1)
+                    }
                     className="flex h-5 w-5 items-center justify-center rounded border border-border text-[10px] font-bold transition-colors hover:bg-primary-light"
                   >
                     −
@@ -386,15 +446,57 @@ function NeveraTab() {
                     {item.quantity}
                   </span>
                   <button
-                    onClick={() => updateQuantity(item.id, Math.min(20, item.quantity + 1))}
+                    onClick={() =>
+                      updateQuantity(
+                        item.id,
+                        Math.min(20, item.quantity + 1),
+                      )
+                    }
                     disabled={item.quantity >= 20}
                     className="flex h-5 w-5 items-center justify-center rounded border border-border text-[10px] font-bold transition-colors hover:bg-primary-light disabled:opacity-30"
                   >
                     +
                   </button>
                 </div>
-              </div>
-            ))}
+              );
+              const titleSpan = (
+                <span
+                  key="title"
+                  className="whitespace-nowrap text-xs font-bold capitalize"
+                >
+                  {item.name}
+                </span>
+              );
+              return (
+                <div key={item.id} className="relative">
+                  {/* Sizing placeholder — invisible, locked to the collapsed
+                      title-only width. Text rendered via ::before pseudo so
+                      the DOM contains only one real text node per item. */}
+                  <div
+                    aria-hidden
+                    data-name={item.name}
+                    className="invisible flex items-center gap-1.5 rounded-lg border border-border px-2 py-1.5 text-xs font-bold capitalize before:whitespace-nowrap before:content-[attr(data-name)]"
+                  />
+                  {/* Real pill — absolutely positioned over the placeholder.
+                      Anchored to left-0 by default; when the selector would
+                      overflow the shelf area we anchor to right-0 instead so
+                      the pill grows leftward without pushing layout. */}
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleExpanded(item.id, e.currentTarget as HTMLElement);
+                    }}
+                    className={`absolute top-0 flex cursor-pointer select-none items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5 shadow-sm transition-shadow duration-200 ${
+                      openLeft ? "right-0" : "left-0"
+                    } ${
+                      removingId === item.id ? "animate-pulse opacity-40" : ""
+                    } ${isExpanded ? "z-20 shadow-md" : ""}`}
+                  >
+                    {openLeft ? [selector, titleSpan] : [titleSpan, selector]}
+                  </div>
+                </div>
+              );
+            })}
           </ShelfGrid>
         </>
       )}
@@ -876,8 +978,14 @@ function CongeladorTab() {
 
 // ==================== SHELF GRID ====================
 
-function ShelfGrid({ children }: { children: ReactNode }) {
+const ShelfGrid = forwardRef<HTMLDivElement, { children: ReactNode }>(function ShelfGrid(
+  { children },
+  ref,
+) {
   const containerRef = useRef<HTMLDivElement>(null);
+  // Expose the internal container DOM node to the parent so it can run
+  // outside-click detection against the whole shelf area.
+  useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
   const [shelfYs, setShelfYs] = useState<number[]>([]);
 
   useEffect(() => {
@@ -916,19 +1024,41 @@ function ShelfGrid({ children }: { children: ReactNode }) {
     return () => observer.disconnect();
   }, [children]);
 
+  // Clip the back panel so it ends right at the bottom of the last plank —
+  // keeps the back panel from spilling below the bottom shelf. (The plank
+  // sits flush at top: y with h-1 ≈ 4px, so its bottom is y + 4.)
+  const panelBottom = shelfYs.length > 0 ? shelfYs[shelfYs.length - 1] + 4 : null;
+
   return (
-    <div ref={containerRef} className="relative mt-3 flex flex-wrap items-end gap-2 px-1 pb-3">
+    <div
+      ref={containerRef}
+      className="relative isolate mt-3 flex flex-wrap items-end gap-y-4 gap-x-2 px-1 pb-2"
+    >
+      {/* Furniture back panel — warm muted tan sitting BEHIND every item.
+          Stays inside the container's horizontal padding (so it respects the
+          page padding) and is height-clipped to the last shelf so it never
+          sticks out underneath. `isolate` on the container creates a
+          stacking context so `-z-10` drops below static items without
+          escaping the parent. */}
+      <div
+        data-shelf="true"
+        aria-hidden
+        className="pointer-events-none absolute left-2 right-2 top-0 -z-10 rounded-md bg-[#9b7e5e]/20 shadow-inner"
+        style={{ bottom: panelBottom != null ? `calc(100% - ${panelBottom}px)` : 0 }}
+      />
       {children}
       {shelfYs.map((y, i) => (
         <div
           key={i}
           data-shelf="true"
-          className="pointer-events-none absolute left-0 right-0"
-          style={{ top: y + 4 }}
+          className="pointer-events-none absolute inset-x-0"
+          style={{ top: y }}
         >
-          <div className="h-1 rounded-b bg-gradient-to-b from-amber-800/20 to-amber-900/10 shadow-[0_1px_2px_rgba(120,80,40,0.12)]" />
+          {/* Opaque planks — warm muted walnut. Sits flush against the
+              bottom of the row above so items rest directly on the shelf. */}
+          <div className="h-1 rounded-b bg-gradient-to-b from-[#7a5a3a] to-[#4a3520] shadow-[0_1px_3px_rgba(60,40,20,0.25)]" />
         </div>
       ))}
     </div>
   );
-}
+});
