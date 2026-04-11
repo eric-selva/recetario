@@ -149,8 +149,18 @@ export default function RecetasPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2.5 font-heading text-3xl font-bold">
-            <svg className={`h-8 w-8 ${accentText}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            <svg
+              className={`h-8 w-8 ${accentText}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+              />
             </svg>
             Recetas
           </h1>
@@ -312,8 +322,8 @@ export default function RecetasPage() {
           value={mealType}
           onChange={setMealType}
           colorMap={{
-            cena: { bg: 'bg-night/15', text: 'text-night' },
-            postre: { bg: 'bg-rose/15', text: 'text-rose' },
+            cena: { bg: "bg-night/15", text: "text-night" },
+            postre: { bg: "bg-rose/15", text: "text-rose" },
           }}
         />
       </div>
@@ -329,13 +339,13 @@ export default function RecetasPage() {
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
-                  className="flex animate-pulse overflow-hidden rounded-2xl border border-border bg-card"
+                  className="flex h-20 animate-pulse overflow-hidden rounded-2xl border border-border bg-card sm:h-28"
                 >
-                  <div className="h-28 w-28 shrink-0 bg-primary-light/30 sm:w-32" />
-                  <div className="flex flex-1 flex-col justify-center p-4 space-y-3">
-                    <div className="h-5 w-20 rounded-lg bg-primary-light/40" />
-                    <div className="h-5 w-3/4 rounded-lg bg-primary-light/30" />
-                    <div className="h-4 w-1/2 rounded-lg bg-primary-light/20" />
+                  <div className="h-20 w-20 shrink-0 bg-primary-light/30 sm:h-28 sm:w-32" />
+                  <div className="flex flex-1 flex-col justify-center px-3 py-2 space-y-2 sm:p-4 sm:space-y-3">
+                    <div className="h-3.5 w-20 rounded-lg bg-primary-light/40 sm:h-5" />
+                    <div className="h-4 w-3/4 rounded-lg bg-primary-light/30 sm:h-5" />
+                    <div className="hidden h-4 w-1/2 rounded-lg bg-primary-light/20 sm:block" />
                   </div>
                 </div>
               ))}
@@ -434,9 +444,7 @@ export default function RecetasPage() {
             ))}
           </div>
         ) : (
-          <div
-            className={`mt-6 animate-pulse ${viewModeGridClass[viewMode]}`}
-          >
+          <div className={`mt-6 animate-pulse ${viewModeGridClass[viewMode]}`}>
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
