@@ -43,6 +43,12 @@ interface QtyOverride {
   quantity: number;
 }
 
+interface ItemState {
+  ingredient_key: string;
+  checked: boolean;
+  removed: boolean;
+}
+
 interface RecipeSuggestion {
   id: string;
   title: string;
@@ -98,8 +104,9 @@ export default function ListaCompraPage() {
       fetch("/api/despensa?location=nevera").then((r) => r.json()),
       fetch("/api/lista-compra/extras").then((r) => r.json()),
       fetch("/api/lista-compra/qty-overrides").then((r) => r.json()),
+      fetch("/api/lista-compra/state").then((r) => r.json()),
     ])
-      .then(([listData, pantryData, extrasData, overridesData]) => {
+      .then(([listData, pantryData, extrasData, overridesData, stateData]) => {
         setItems(Array.isArray(listData) ? listData : []);
         setPantry(Array.isArray(pantryData) ? pantryData : []);
         setExtras(Array.isArray(extrasData) ? extrasData : []);
@@ -110,8 +117,38 @@ export default function ListaCompraPage() {
           }
           setQtyOverrides(map);
         }
+        if (Array.isArray(stateData)) {
+          const checkedSet = new Set<string>();
+          const removedSet = new Set<string>();
+          for (const s of stateData as ItemState[]) {
+            if (s.checked) checkedSet.add(s.ingredient_key);
+            if (s.removed) removedSet.add(s.ingredient_key);
+          }
+          setChecked(checkedSet);
+          setRemoved(removedSet);
+        }
       })
       .finally(() => setLoading(false));
+  }
+
+  // Fire-and-forget helpers to persist item state to the server. They run in
+  // the background — we deliberately don't await them so the UI stays snappy.
+  function persistState(
+    ingredient_key: string,
+    patch: { checked?: boolean; removed?: boolean },
+  ) {
+    fetch("/api/lista-compra/state", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ingredient_key, ...patch }),
+    });
+  }
+
+  function deleteStateKey(ingredient_key: string) {
+    fetch(
+      `/api/lista-compra/state?key=${encodeURIComponent(ingredient_key)}`,
+      { method: "DELETE" },
+    );
   }
 
   useEffect(() => {
@@ -297,8 +334,11 @@ export default function ListaCompraPage() {
   function toggleCheck(key: string) {
     setChecked((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
+      const willBeChecked = !next.has(key);
+      if (willBeChecked) next.add(key);
+      else next.delete(key);
+      // Persist: keep removed=false (toggling check should never re-hide it)
+      persistState(key, { checked: willBeChecked, removed: false });
       return next;
     });
   }
@@ -344,6 +384,11 @@ export default function ListaCompraPage() {
     if (extraId) {
       fetch(`/api/lista-compra/extras?id=${extraId}`, { method: "DELETE" });
       setExtras((prev) => prev.filter((e) => e.id !== extraId));
+      // Extras live in their own table; no need to keep a state row.
+      deleteStateKey(key);
+    } else {
+      // Persist removal so it survives refresh / loss of connection.
+      persistState(key, { checked: false, removed: true });
     }
     // Remove qty override from DB
     fetch(`/api/lista-compra/qty-overrides?key=${encodeURIComponent(key)}`, { method: "DELETE" });
@@ -357,7 +402,7 @@ export default function ListaCompraPage() {
       for (const key of checkedKeys) next.add(key);
       return next;
     });
-    // Delete extras that were checked
+    // Delete extras that were checked + persist removal for the rest
     const checkedIngredients = mergedIngredients.filter((i) =>
       checkedKeys.has(i.key),
     );
@@ -367,6 +412,9 @@ export default function ListaCompraPage() {
           method: "DELETE",
         });
         setExtras((prev) => prev.filter((e) => e.id !== ing.extraId));
+        deleteStateKey(ing.key);
+      } else {
+        persistState(ing.key, { checked: false, removed: true });
       }
     }
     setChecked(new Set());
@@ -389,6 +437,7 @@ export default function ListaCompraPage() {
       fetch("/api/lista-compra", { method: "DELETE" }),
       fetch("/api/lista-compra/extras", { method: "DELETE" }),
       fetch("/api/lista-compra/qty-overrides", { method: "DELETE" }),
+      fetch("/api/lista-compra/state", { method: "DELETE" }),
     ]);
     setItems([]);
     setExtras([]);
