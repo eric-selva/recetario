@@ -77,6 +77,7 @@ export default function ListaCompraPage() {
   const [qtyOverrides, setQtyOverrides] = useState<Map<string, number>>(new Map());
   const [mutating, setMutating] = useState(false);
   const [removingRecipe, setRemovingRecipe] = useState<string | null>(null);
+  const [recipesExpanded, setRecipesExpanded] = useState(false);
 
   // Search state
   const [search, setSearch] = useState("");
@@ -201,9 +202,10 @@ export default function ListaCompraPage() {
     for (const item of items) {
       const multiplier = item.servings || 4;
       for (const ing of item.ingredients) {
+        const normalizedUnit = normalizeUnit(ing.unit);
         const mergeKey =
           ing.catalog_id || `name__${ing.name.toLowerCase().trim()}`;
-        const key = `${mergeKey}__${ing.unit}`;
+        const key = `${mergeKey}__${normalizedUnit}`;
         if (removed.has(key)) continue;
 
         const scaledQty = ing.quantity * multiplier;
@@ -215,13 +217,14 @@ export default function ListaCompraPage() {
             catalogId: ing.catalog_id,
             name: ing.name,
             quantity: scaledQty,
-            unit: ing.unit,
+            unit: normalizedUnit,
           });
         }
       }
     }
 
-    // Add extra (manual) ingredients
+    // Add extra (manual) ingredients — always keep their own row so users can
+    // delete/adjust them independently of recipe-derived quantities.
     for (const ex of extras) {
       const key = `extra__${ex.id}`;
       if (removed.has(key)) continue;
@@ -229,7 +232,7 @@ export default function ListaCompraPage() {
         catalogId: null,
         name: ex.name,
         quantity: ex.quantity,
-        unit: ex.unit,
+        unit: normalizeUnit(ex.unit),
         manual: true,
         extraId: ex.id,
       });
@@ -586,6 +589,106 @@ export default function ListaCompraPage() {
         )}
       </div>
 
+      {/* Recipes in list — moved directly under the search bar */}
+      {items.length > 0 && (
+        <section className="mt-3">
+          {/* Mobile toggle — sm:hidden */}
+          <button
+            onClick={() => setRecipesExpanded((v) => !v)}
+            className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium shadow-sm transition-colors hover:bg-primary-light/30 sm:hidden"
+            aria-expanded={recipesExpanded}
+          >
+            <span className="flex items-center gap-2">
+              <svg
+                className="h-4 w-4 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                />
+              </svg>
+              Recetas de esta semana
+              <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary">
+                {items.length}
+              </span>
+            </span>
+            <svg
+              className={`h-4 w-4 text-muted transition-transform ${recipesExpanded ? "rotate-180" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Pills — always visible on sm+, collapsible on mobile.
+              grid-rows 0fr→1fr animates the natural height without JS. */}
+          <div
+            className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out sm:!grid-rows-[1fr] sm:!opacity-100 ${
+              recipesExpanded
+                ? "grid-rows-[1fr] opacity-100"
+                : "grid-rows-[0fr] opacity-0"
+            }`}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <div className="mt-3 flex flex-wrap gap-2">
+                {addingRecipe && (
+                  <div className="flex animate-pulse items-center gap-2 rounded-full border border-border bg-card px-4 py-2">
+                    <div className="h-4 w-24 rounded bg-primary-light/40" />
+                  </div>
+                )}
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm shadow-sm transition-opacity ${
+                      removingRecipe === item.id
+                        ? "animate-pulse opacity-50"
+                        : ""
+                    }`}
+                  >
+                    <Link
+                      href={`/recetas/${item.recipe_id}`}
+                      className="font-medium hover:text-primary"
+                    >
+                      {item.recipe?.title ?? "Receta"}
+                    </Link>
+                    <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary">
+                      ×{item.servings}
+                    </span>
+                    <button
+                      onClick={() => removeRecipe(item.id)}
+                      className="text-muted hover:text-red-600"
+                      title="Quitar de la lista"
+                    >
+                      <svg
+                        className="h-3.5 w-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Count + Clear row */}
       {hasContent && (
         <div className="mt-3 flex items-center justify-between">
@@ -643,78 +746,6 @@ export default function ListaCompraPage() {
       {/* Content */}
       {hasContent && (
         <>
-          {/* Recipes in list */}
-          {items.length > 0 && (
-            <section className="mt-2">
-              <div className="flex items-center gap-3">
-                {/* <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                  </svg>
-                </div>
-                <h2 className="font-heading text-lg font-semibold">
-                  Recetas de esta semana
-                </h2> */}
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {addingRecipe && (
-                  <div className="flex animate-pulse items-center gap-2 rounded-full border border-border bg-card px-4 py-2">
-                    <div className="h-4 w-24 rounded bg-primary-light/40" />
-                  </div>
-                )}
-                {items.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm shadow-sm transition-opacity ${
-                      removingRecipe === item.id
-                        ? "animate-pulse opacity-50"
-                        : ""
-                    }`}
-                  >
-                    <Link
-                      href={`/recetas/${item.recipe_id}`}
-                      className="font-medium hover:text-primary"
-                    >
-                      {item.recipe?.title ?? "Receta"}
-                    </Link>
-                    <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary">
-                      ×{item.servings}
-                    </span>
-                    <button
-                      onClick={() => removeRecipe(item.id)}
-                      className="text-muted hover:text-red-600"
-                      title="Quitar de la lista"
-                    >
-                      <svg
-                        className="h-3.5 w-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
           {/* Merged ingredient list — notebook style */}
           <section className="mt-4">
             <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
@@ -738,8 +769,8 @@ export default function ListaCompraPage() {
                     {mergedIngredients.map((ing, idx) => (
                       <li
                         key={ing.key}
-                        className={`flex items-center gap-3 border-b border-sky-200/40 py-2.5 pl-14 pr-4 transition-colors ${
-                          checked.has(ing.key) ? "bg-olive-light/20" : "hover:bg-sky-50/30"
+                        className={`flex items-center gap-3 border-b border-sky-200/40 py-2 pl-14 pr-4 leading-none transition-colors ${
+                          checked.has(ing.key) ? "bg-night/10" : "hover:bg-sky-50/30"
                         } ${idx === 0 ? "" : ""}`}
                       >
                         {/* Checkbox */}
@@ -747,7 +778,7 @@ export default function ListaCompraPage() {
                           onClick={() => toggleCheck(ing.key)}
                           className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded border-2 transition-all ${
                             checked.has(ing.key)
-                              ? "border-olive bg-olive text-white"
+                              ? "border-night bg-night text-white"
                               : "border-gray-300"
                           }`}
                         >
@@ -763,14 +794,14 @@ export default function ListaCompraPage() {
                           onClick={() => toggleCheck(ing.key)}
                           className="flex flex-1 cursor-pointer items-center gap-2"
                         >
-                          <span className={`text-sm font-medium capitalize ${checked.has(ing.key) ? "text-gray-400 line-through" : "text-gray-800"}`}>
+                          <span className={`text-sm font-medium leading-none capitalize ${checked.has(ing.key) ? "text-blue-900/40 line-through" : "text-blue-900"}`}>
                             {ing.name}
                           </span>
                           {ing.manual && (
-                            <span className="text-[10px] text-saffron">manual</span>
+                            <span className="text-[10px] leading-none text-saffron">manual</span>
                           )}
                           {ing.pantryDiscount > 0 && (
-                            <span className="text-[10px] text-olive">
+                            <span className="text-[10px] leading-none text-olive">
                               {formatQuantity(ing.pantryDiscount)} en despensa
                             </span>
                           )}
@@ -778,14 +809,14 @@ export default function ListaCompraPage() {
 
                         {/* Quantity */}
                         {ing.unit === "unidad" ? (
-                          <div className="flex shrink-0 items-center gap-1">
+                          <div className="flex shrink-0 items-center gap-0.5">
                             <button
                               onClick={() => adjustQuantity(ing.key, ing.quantity, -1, ing.extraId)}
                               className="flex h-6 w-6 items-center justify-center rounded border border-gray-200 text-xs font-bold text-gray-500 transition-colors hover:bg-gray-100"
                             >
                               −
                             </button>
-                            <span className={`w-5 text-center text-sm font-semibold ${checked.has(ing.key) ? "text-gray-400" : "text-gray-700"}`}>
+                            <span className={`w-5 text-center text-sm font-semibold leading-none ${checked.has(ing.key) ? "text-gray-400" : "text-gray-800"}`}>
                               {formatQuantity(ing.quantity)}
                             </span>
                             <button
@@ -799,13 +830,13 @@ export default function ListaCompraPage() {
                         ) : (
                           <>
                             <span
-                              className={`shrink-0 text-sm font-semibold ${checked.has(ing.key) ? "text-gray-400" : "text-primary"}`}
+                              className={`shrink-0 text-sm font-semibold leading-none ${checked.has(ing.key) ? "text-gray-400" : "text-gray-800"}`}
                             >
                               {ing.quantity > 0 && `${formatQuantity(ing.quantity)} ${ing.unit}`}
                             </span>
                             <button
                               onClick={() => removeIngredient(ing.key, ing.extraId)}
-                              className="ml-0.5 shrink-0 rounded p-0.5 text-gray-400 hover:text-red-500 transition-colors"
+                              className="ml-0.5 shrink-0 rounded p-0.5 text-gray-500 hover:text-black transition-colors"
                             >
                               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -827,7 +858,7 @@ export default function ListaCompraPage() {
                     </div>
                     <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-gray-100">
                       <div
-                        className="h-full rounded-full bg-olive transition-all duration-500"
+                        className="h-full rounded-full bg-night transition-all duration-500"
                         style={{ width: `${(checkedCount / totalCount) * 100}%` }}
                       />
                     </div>
@@ -844,4 +875,17 @@ export default function ListaCompraPage() {
 
 function formatQuantity(q: number): string {
   return q % 1 === 0 ? q.toString() : q.toFixed(1);
+}
+
+// Normalize unit strings so that visual variants of the same unit merge into
+// a single shopping-list row. "ud", "uds", "u", "unidades" all collapse to
+// "unidad"; weight/volume aliases collapse to their canonical form.
+function normalizeUnit(unit: string): string {
+  const u = (unit ?? "").toLowerCase().trim();
+  if (u === "ud" || u === "uds" || u === "u" || u === "unidades") return "unidad";
+  if (u === "grs" || u === "gr" || u === "gramos" || u === "gramo") return "g";
+  if (u === "kgs" || u === "kilo" || u === "kilos") return "kg";
+  if (u === "mls" || u === "mililitros") return "ml";
+  if (u === "lts" || u === "l" || u === "litro" || u === "litros") return "l";
+  return u;
 }
