@@ -149,9 +149,11 @@ export default function RecipeCard({
 
   if (viewMode === "list") {
     return (
-      <div className={`group relative flex h-28 overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:shadow-md hover:${colors.border}`}>
+      <div
+        className={`group relative flex h-20 overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:shadow-md hover:${colors.border} sm:h-28`}
+      >
         <Link href={`/recetas/${recipe.id}`} className="flex min-w-0 flex-1">
-          <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-primary-light/30 sm:w-32">
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden bg-primary-light/30 sm:h-28 sm:w-32">
             {recipe.image_url ? (
               <Image
                 src={recipe.image_url}
@@ -204,19 +206,33 @@ export default function RecipeCard({
               )}
               {recipe.calories != null && recipe.calories > 0 && (
                 <span className="flex shrink-0 items-center gap-0.5 text-[10px] text-muted">
-                  <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1.001A3.75 3.75 0 0012 18z" />
+                  <svg
+                    className="h-2.5 w-2.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1.001A3.75 3.75 0 0012 18z"
+                    />
                   </svg>
                   {recipe.calories} kcal
                 </span>
               )}
             </div>
-            <h3 className="line-clamp-2 font-heading text-base font-semibold leading-tight sm:line-clamp-1 sm:text-lg sm:leading-snug">
+            <h3 className="line-clamp-2 font-heading text-base font-semibold leading-none sm:line-clamp-1 sm:text-lg sm:leading-snug">
               {recipe.title}
             </h3>
             {recipe.description && (
-              <p className="mt-0.5 line-clamp-1 text-xs leading-snug text-muted sm:line-clamp-2">
+              <p className="mt-0.5 hidden text-xs leading-snug text-muted sm:line-clamp-2 sm:block">
                 {recipe.description}
               </p>
             )}
@@ -277,10 +293,10 @@ export default function RecipeCard({
           className={`flex min-h-0 flex-1 flex-col ${compact ? "p-2 sm:p-4" : "p-4"}`}
         >
           <div
-            className={`flex items-center gap-1.5 ${compact ? "mb-0.5 sm:mb-2" : "mb-2"}`}
+            className={`flex min-w-0 items-center gap-1.5 overflow-hidden ${compact ? "mb-0.5 sm:mb-2" : "mb-2"}`}
           >
             <span
-              className={`inline-flex items-center gap-0.5 font-medium ${style.bg} ${style.text} ${compact ? "rounded px-1.5 py-0.5 text-[10px] sm:gap-1 sm:rounded-lg sm:px-2.5 sm:py-1 sm:text-xs" : "gap-1 rounded-lg px-2.5 py-1 text-xs"}`}
+              className={`inline-flex shrink-0 items-center gap-0.5 font-medium ${style.bg} ${style.text} ${compact ? "rounded px-1.5 py-0.5 text-[10px] sm:gap-1 sm:rounded-lg sm:px-2.5 sm:py-1 sm:text-xs" : "gap-1 rounded-lg px-2.5 py-1 text-xs"}`}
             >
               <svg
                 className={compact ? "hidden sm:block h-3 w-3" : "h-3 w-3"}
@@ -299,7 +315,7 @@ export default function RecipeCard({
             </span>
             {recipe.prep_time > 0 && (
               <span
-                className={`flex items-center text-muted ${compact ? "gap-0.5 text-[10px] sm:gap-1 sm:text-xs" : "gap-1 text-xs"}`}
+                className={`flex shrink-0 items-center text-muted ${compact ? "gap-0.5 text-[10px] sm:gap-1 sm:text-xs" : "gap-1 text-xs"}`}
               >
                 <svg
                   className={compact ? "h-2.5 w-2.5 sm:h-3 sm:w-3" : "h-3 w-3"}
@@ -319,7 +335,7 @@ export default function RecipeCard({
             )}
             {recipe.calories != null && recipe.calories > 0 && (
               <span
-                className={`flex items-center text-muted ${compact ? "gap-0.5 text-[10px] sm:gap-1 sm:text-xs" : "gap-1 text-xs"}`}
+                className={`flex shrink-0 items-center text-muted ${compact ? "gap-0.5 text-[10px] sm:gap-1 sm:text-xs" : "gap-1 text-xs"}`}
               >
                 <svg
                   className={compact ? "h-2.5 w-2.5 sm:h-3 sm:w-3" : "h-3 w-3"}
@@ -328,8 +344,16 @@ export default function RecipeCard({
                   stroke="currentColor"
                   strokeWidth={2}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1.001A3.75 3.75 0 0012 18z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1.001A3.75 3.75 0 0012 18z"
+                  />
                 </svg>
                 {recipe.calories} kcal
               </span>
