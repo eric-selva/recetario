@@ -107,16 +107,38 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
     setSuggestions([])
   }
 
+  const [uploadError, setUploadError] = useState<string | null>(null)
+
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    setUploadError(null)
     setUploading(true)
-    const formData = new FormData()
-    formData.append('file', file)
-    const res = await fetch('/api/recetas/upload', { method: 'POST', body: formData })
-    const data = await res.json()
-    if (data.url) setImageUrl(data.url)
-    setUploading(false)
+    try {
+      // Resize on the client to keep uploads small & fast (especially from
+      // mobile cameras that shoot 12-50 MP originals). Also normalises HEIC
+      // → JPEG so every browser can display it.
+      const resized = await resizeImage(file, 1200)
+      const formData = new FormData()
+      formData.append('file', resized)
+      const res = await fetch('/api/recetas/upload', { method: 'POST', body: formData })
+      if (!res.ok) {
+        const err = await res.json().catch(() => null)
+        throw new Error(err?.error || `Error ${res.status}`)
+      }
+      const data = await res.json()
+      if (data.url) {
+        setImageUrl(data.url)
+      } else {
+        throw new Error('No se recibio la URL de la imagen')
+      }
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Error al subir la imagen')
+    } finally {
+      setUploading(false)
+      // Reset the input so the same file can be re-selected if needed.
+      e.target.value = ''
+    }
   }
 
   function addIngredient() {
@@ -280,12 +302,16 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
             <input
               type="file"
               accept="image/*"
+              capture="environment"
               onChange={handleImageUpload}
-              className="hidden"
+              className="sr-only"
               disabled={uploading}
             />
           </label>
         </div>
+        {uploadError && (
+          <p className="text-sm text-red-500">{uploadError}</p>
+        )}
       </section>
 
       {/* Ingredients */}
@@ -455,4 +481,38 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
       </div>
     </form>
   )
+}
+
+/**
+ * Resize an image on the client before uploading. Converts any format
+ * (including HEIC from iOS) to JPEG and scales down to `maxPx` on its
+ * longest side. Returns a File-like Blob named `resized.jpg`.
+ */
+function resizeImage(file: File, maxPx: number): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image()
+    img.onload = () => {
+      let { width, height } = img
+      if (width > maxPx || height > maxPx) {
+        const ratio = Math.min(maxPx / width, maxPx / height)
+        width = Math.round(width * ratio)
+        height = Math.round(height * ratio)
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, width, height)
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return reject(new Error('Error al redimensionar la imagen'))
+          resolve(new File([blob], 'resized.jpg', { type: 'image/jpeg' }))
+        },
+        'image/jpeg',
+        0.85,
+      )
+    }
+    img.onerror = () => reject(new Error('No se pudo leer la imagen'))
+    img.src = URL.createObjectURL(file)
+  })
 }
