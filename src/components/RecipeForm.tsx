@@ -302,7 +302,6 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
             <input
               type="file"
               accept="image/*"
-              capture="environment"
               onChange={handleImageUpload}
               className="sr-only"
               disabled={uploading}
