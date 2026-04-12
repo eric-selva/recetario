@@ -325,15 +325,15 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
           <h2 className="font-heading text-lg font-semibold">Ingredientes</h2>
         </div>
         {ingredients.map((ing, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <div ref={(el) => { ingWrapperRefs.current[i] = el }} className="relative flex-1">
+          <div key={i} className="flex items-center gap-1">
+            <div ref={(el) => { ingWrapperRefs.current[i] = el }} className="relative min-w-0 flex-1">
               <input
                 type="text"
                 placeholder="Ingrediente"
                 value={ing.name}
                 onChange={(e) => updateIngredient(i, 'name', e.target.value)}
                 onFocus={() => setFocusedIng(i)}
-                className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
+                className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
               />
               {ing.catalog_id && (
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-olive">
@@ -363,12 +363,12 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
               step="any"
               value={ing.quantity || ''}
               onChange={(e) => updateIngredient(i, 'quantity', Number(e.target.value))}
-              className="w-20 rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
+              className="w-14 shrink-0 rounded-xl border border-border bg-card px-2 py-2.5 text-center text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
             />
             <select
               value={ing.unit}
               onChange={(e) => updateIngredient(i, 'unit', e.target.value)}
-              className="rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
+              className="w-16 shrink-0 rounded-xl border border-border bg-card px-1 py-2.5 text-xs outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
             >
               {units.map((u) => (
                 <option key={u.value} value={u.value}>
@@ -379,7 +379,7 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
             <button
               type="button"
               onClick={() => updateIngredient(i, 'shoppable', !ing.shoppable)}
-              className={`rounded-lg p-2 transition-colors ${
+              className={`shrink-0 rounded-lg p-1 transition-colors ${
                 ing.shoppable
                   ? 'text-olive hover:bg-olive-light'
                   : 'text-muted/40 hover:bg-primary-light'
@@ -394,7 +394,7 @@ export default function RecipeForm({ initialData, recipeId }: RecipeFormProps) {
               <button
                 type="button"
                 onClick={() => removeIngredient(i)}
-                className="rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600"
+                className="shrink-0 rounded-lg p-1 text-muted hover:bg-red-50 hover:text-red-600"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
