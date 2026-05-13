@@ -68,6 +68,7 @@ export default function EditarRecetaPage() {
               quantity: i.quantity,
               unit: i.unit,
               shoppable: i.shoppable ?? true,
+              catalog_id: i.catalog_id,
             })),
             steps: recipe.steps.map((s) => ({
               instruction: s.instruction,

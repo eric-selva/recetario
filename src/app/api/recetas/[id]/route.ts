@@ -107,7 +107,13 @@ export async function PUT(
           shoppable?: boolean
           catalog_id?: string
         }
-        const catalogId = ing.catalog_id ?? await resolveCatalogId(supabase, ing.name, ing.unit, ing.shoppable)
+        const catalogId = await resolveCatalogId(
+          supabase,
+          ing.name,
+          ing.unit,
+          ing.shoppable,
+          ing.catalog_id,
+        )
         ingredientRows.push({
           recipe_id: id,
           catalog_id: catalogId,
@@ -180,17 +186,36 @@ async function resolveCatalogId(
   name: string,
   unit: string,
   shoppable?: boolean,
+  catalogId?: string,
 ): Promise<string | null> {
   const trimmed = name.trim()
 
+  if (catalogId) {
+    if (shoppable !== undefined) {
+      await supabase
+        .from('catalog')
+        .update({ shoppable, default_unit: unit })
+        .eq('id', catalogId)
+    }
+    return catalogId
+  }
+
   const { data: existing } = await supabase
     .from('catalog')
-    .select('id')
+    .select('id, shoppable')
     .ilike('name', trimmed)
     .limit(1)
     .single()
 
-  if (existing) return existing.id
+  if (existing) {
+    if (shoppable !== undefined && existing.shoppable !== shoppable) {
+      await supabase
+        .from('catalog')
+        .update({ shoppable, default_unit: unit })
+        .eq('id', existing.id)
+    }
+    return existing.id
+  }
 
   const { data: created } = await supabase
     .from('catalog')

@@ -24,13 +24,6 @@ interface ShoppingItem {
   }[];
 }
 
-interface PantryIngredient {
-  catalog_id: string | null;
-  name: string;
-  quantity: number;
-  unit: string;
-}
-
 interface ExtraIngredient {
   id: string;
   name: string;
@@ -75,7 +68,6 @@ const mealTypeStyles: Record<string, string> = {
 
 export default function ListaCompraPage() {
   const [items, setItems] = useState<ShoppingItem[]>([]);
-  const [pantry, setPantry] = useState<PantryIngredient[]>([]);
   const [extras, setExtras] = useState<ExtraIngredient[]>([]);
   const [loading, setLoading] = useState(true);
   const [checked, setChecked] = useState<Set<string>>(new Set());
@@ -96,19 +88,21 @@ export default function ListaCompraPage() {
   >([]);
   const [addingRecipe, setAddingRecipe] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const recipeListSignature = useMemo(
+    () => items.map((item) => item.id).sort().join("|"),
+    [items],
+  );
 
   function fetchList() {
     setLoading(true);
     Promise.all([
       fetch("/api/lista-compra").then((r) => r.json()),
-      fetch("/api/despensa?location=nevera").then((r) => r.json()),
       fetch("/api/lista-compra/extras").then((r) => r.json()),
       fetch("/api/lista-compra/qty-overrides").then((r) => r.json()),
       fetch("/api/lista-compra/state").then((r) => r.json()),
     ])
-      .then(([listData, pantryData, extrasData, overridesData, stateData]) => {
+      .then(([listData, extrasData, overridesData, stateData]) => {
         setItems(Array.isArray(listData) ? listData : []);
-        setPantry(Array.isArray(pantryData) ? pantryData : []);
         setExtras(Array.isArray(extrasData) ? extrasData : []);
         if (Array.isArray(overridesData)) {
           const map = new Map<string, number>();
@@ -242,7 +236,7 @@ export default function ListaCompraPage() {
         const normalizedUnit = normalizeUnit(ing.unit);
         const mergeKey =
           ing.catalog_id || `name__${ing.name.toLowerCase().trim()}`;
-        const key = `${mergeKey}__${normalizedUnit}`;
+        const key = `recipes__${recipeListSignature}__${mergeKey}__${normalizedUnit}`;
         if (removed.has(key)) continue;
 
         const scaledQty = ing.quantity * multiplier;
@@ -275,53 +269,22 @@ export default function ListaCompraPage() {
       });
     }
 
-    // Build pantry lookup
-    const pantryByCatalogId = new Map<string, number>();
-    const pantryByName = new Map<string, number>();
-    for (const p of pantry) {
-      if (p.catalog_id) {
-        pantryByCatalogId.set(
-          p.catalog_id,
-          (pantryByCatalogId.get(p.catalog_id) || 0) + p.quantity,
-        );
-      } else {
-        const key = p.name.toLowerCase().trim();
-        pantryByName.set(key, (pantryByName.get(key) || 0) + p.quantity);
-      }
-    }
-
     const result: {
       key: string;
       name: string;
       quantity: number;
       unit: string;
-      pantryDiscount: number;
       manual?: boolean;
       extraId?: string;
     }[] = [];
     for (const [key, value] of map) {
-      let inPantry = 0;
-      if (value.catalogId) {
-        inPantry = pantryByCatalogId.get(value.catalogId) || 0;
-      }
-      if (inPantry === 0) {
-        inPantry = pantryByName.get(value.name.toLowerCase().trim()) || 0;
-      }
-
-      const adjusted = value.manual
-        ? value.quantity
-        : Math.max(0, value.quantity - inPantry);
-      const finalQty = qtyOverrides.has(key) ? qtyOverrides.get(key)! : adjusted;
+      const finalQty = qtyOverrides.has(key) ? qtyOverrides.get(key)! : value.quantity;
       if (finalQty > 0) {
         result.push({
           key,
           name: value.name,
           quantity: finalQty,
           unit: value.unit,
-          pantryDiscount:
-            !value.manual && inPantry > 0
-              ? Math.min(inPantry, value.quantity)
-              : 0,
           manual: value.manual,
           extraId: value.extraId,
         });
@@ -329,7 +292,7 @@ export default function ListaCompraPage() {
     }
 
     return result;
-  }, [items, pantry, removed, extras, qtyOverrides]);
+  }, [items, recipeListSignature, removed, extras, qtyOverrides]);
 
   function toggleCheck(key: string) {
     setChecked((prev) => {
@@ -704,13 +667,14 @@ export default function ListaCompraPage() {
                   >
                     <Link
                       href={`/recetas/${item.recipe_id}`}
-                      className="font-medium hover:text-primary"
+                      className="inline-flex items-center gap-2 rounded-full font-medium transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      title={`Abrir ${item.recipe?.title ?? "receta"}`}
                     >
-                      {item.recipe?.title ?? "Receta"}
+                      <span>{item.recipe?.title ?? "Receta"}</span>
+                      <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary">
+                        ×{item.servings}
+                      </span>
                     </Link>
-                    <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary">
-                      ×{item.servings}
-                    </span>
                     <button
                       onClick={() => removeRecipe(item.id)}
                       className="text-muted hover:text-red-600"
@@ -848,11 +812,6 @@ export default function ListaCompraPage() {
                           </span>
                           {ing.manual && (
                             <span className="text-[10px] leading-none text-saffron">manual</span>
-                          )}
-                          {ing.pantryDiscount > 0 && (
-                            <span className="text-[10px] leading-none text-olive">
-                              {formatQuantity(ing.pantryDiscount)} en despensa
-                            </span>
                           )}
                         </span>
 

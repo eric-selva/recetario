@@ -50,6 +50,16 @@ describe("Lista de Compra Page", () => {
     });
   });
 
+  it("links recipe pills to their recipes", async () => {
+    render(<ListaCompraPage />);
+    await waitFor(() => {
+      expect(screen.getByRole("link", { name: /Espaguetis Boloñesa/ })).toHaveAttribute(
+        "href",
+        "/recetas/r1",
+      );
+    });
+  });
+
   it("merges duplicate ingredients (tomate: 200g + 300g = 500g)", async () => {
     render(<ListaCompraPage />);
     await waitFor(() => {
@@ -193,10 +203,40 @@ describe("Lista de Compra Page", () => {
       expect(badges.length).toBe(2);
     });
   });
+
+  it("ignores stale removed ingredient state from previous lists", async () => {
+    mockFetch({
+      "/api/lista-compra": [
+        {
+          id: "sl-stale",
+          recipe_id: "r1",
+          added_at: "2024-01-01T00:00:00Z",
+          servings: 1,
+          recipe: { id: "r1", title: "Receta", meal_type: "comida" },
+          ingredients: [
+            { id: "i1", name: "Zanahoria", quantity: 2, unit: "unidad" },
+          ],
+        },
+      ],
+      "/api/lista-compra/state": [
+        {
+          ingredient_key: "name__zanahoria__unidad",
+          checked: false,
+          removed: true,
+        },
+      ],
+    });
+
+    render(<ListaCompraPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Zanahoria")).toBeInTheDocument();
+    });
+  });
 });
 
-describe("Lista de Compra - Pantry subtraction", () => {
-  it("subtracts pantry quantities from needed ingredients", async () => {
+describe("Lista de Compra - Pantry is ignored", () => {
+  it("does not subtract pantry quantities from needed ingredients", async () => {
     mockFetch({
       "/api/lista-compra": [
         {
@@ -218,63 +258,7 @@ describe("Lista de Compra - Pantry subtraction", () => {
     render(<ListaCompraPage />);
 
     await waitFor(() => {
-      // 3 needed - 1 in pantry = 2 (shown in quantity selector for "unidad" items)
-      expect(screen.getByText("2")).toBeInTheDocument();
-    });
-  });
-
-  it("shows pantry discount label", async () => {
-    mockFetch({
-      "/api/lista-compra": [
-        {
-          id: "sl1",
-          recipe_id: "r1",
-          added_at: "2024-01-01T00:00:00Z",
-          servings: 1,
-          recipe: { id: "r1", title: "Receta", meal_type: "comida" },
-          ingredients: [
-            { id: "i1", name: "Cebolla", quantity: 2, unit: "unidad" },
-          ],
-        },
-      ],
-      "/api/despensa": [
-        { id: "p1", name: "Cebolla", quantity: 1, unit: "unidad", location: "nevera" },
-      ],
-    });
-
-    render(<ListaCompraPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText(/en despensa/)).toBeInTheDocument();
-    });
-  });
-
-  it("hides ingredient entirely when pantry covers full quantity", async () => {
-    mockFetch({
-      "/api/lista-compra": [
-        {
-          id: "sl1",
-          recipe_id: "r1",
-          added_at: "2024-01-01T00:00:00Z",
-          servings: 1,
-          recipe: { id: "r1", title: "Receta", meal_type: "comida" },
-          ingredients: [
-            { id: "i1", name: "Zanahoria", quantity: 2, unit: "unidad" },
-            { id: "i2", name: "Cebolla", quantity: 1, unit: "unidad" },
-          ],
-        },
-      ],
-      "/api/despensa": [
-        { id: "p1", name: "Zanahoria", quantity: 5, unit: "unidad", location: "nevera" },
-      ],
-    });
-
-    render(<ListaCompraPage />);
-
-    await waitFor(() => {
-      // Cebolla should appear, zanahoria should not (pantry has more than needed)
-      expect(screen.getByText("Cebolla")).toBeInTheDocument();
-      expect(screen.queryByText("Zanahoria")).not.toBeInTheDocument();
+      expect(screen.getByText("3")).toBeInTheDocument();
     });
   });
 });
