@@ -88,41 +88,47 @@ export default function ListaCompraPage() {
   >([]);
   const [addingRecipe, setAddingRecipe] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
-  const recipeListSignature = useMemo(
-    () => items.map((item) => item.id).sort().join("|"),
-    [items],
-  );
 
-  function fetchList() {
-    setLoading(true);
-    Promise.all([
+  async function fetchListData() {
+    const [listData, extrasData, overridesData, stateData] = await Promise.all([
       fetch("/api/lista-compra").then((r) => r.json()),
       fetch("/api/lista-compra/extras").then((r) => r.json()),
       fetch("/api/lista-compra/qty-overrides").then((r) => r.json()),
       fetch("/api/lista-compra/state").then((r) => r.json()),
-    ])
-      .then(([listData, extrasData, overridesData, stateData]) => {
-        setItems(Array.isArray(listData) ? listData : []);
-        setExtras(Array.isArray(extrasData) ? extrasData : []);
-        if (Array.isArray(overridesData)) {
-          const map = new Map<string, number>();
-          for (const o of overridesData as QtyOverride[]) {
-            map.set(o.ingredient_key, o.quantity);
-          }
-          setQtyOverrides(map);
-        }
-        if (Array.isArray(stateData)) {
-          const checkedSet = new Set<string>();
-          const removedSet = new Set<string>();
-          for (const s of stateData as ItemState[]) {
-            if (s.checked) checkedSet.add(s.ingredient_key);
-            if (s.removed) removedSet.add(s.ingredient_key);
-          }
-          setChecked(checkedSet);
-          setRemoved(removedSet);
-        }
-      })
-      .finally(() => setLoading(false));
+    ]);
+    return { listData, extrasData, overridesData, stateData };
+  }
+
+  function applyListData(data: Awaited<ReturnType<typeof fetchListData>>) {
+    const { listData, extrasData, overridesData, stateData } = data;
+    setItems(Array.isArray(listData) ? listData : []);
+    setExtras(Array.isArray(extrasData) ? extrasData : []);
+    if (Array.isArray(overridesData)) {
+      const map = new Map<string, number>();
+      for (const o of overridesData as QtyOverride[]) {
+        map.set(o.ingredient_key, o.quantity);
+      }
+      setQtyOverrides(map);
+    }
+    if (Array.isArray(stateData)) {
+      const checkedSet = new Set<string>();
+      const removedSet = new Set<string>();
+      for (const s of stateData as ItemState[]) {
+        if (s.checked) checkedSet.add(s.ingredient_key);
+        if (s.removed) removedSet.add(s.ingredient_key);
+      }
+      setChecked(checkedSet);
+      setRemoved(removedSet);
+    }
+  }
+
+  async function fetchList() {
+    setLoading(true);
+    try {
+      applyListData(await fetchListData());
+    } finally {
+      setLoading(false);
+    }
   }
 
   // Fire-and-forget helpers to persist item state to the server. They run in
@@ -194,7 +200,42 @@ export default function ListaCompraPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ recipe_id: recipeId, servings: 4 }),
     });
-    await fetchList();
+    // Adding a recipe must bring its shoppable ingredients back into view even
+    // if any of them were previously marked removed. Preserve the checked flag
+    // (use PUT, not DELETE) so a user's earlier ticks survive.
+    const data = await fetchListData();
+    const newItem = Array.isArray(data.listData)
+      ? (data.listData as ShoppingItem[]).find(
+          (i) => i.recipe_id === recipeId,
+        )
+      : undefined;
+    if (newItem && Array.isArray(data.stateData)) {
+      const newItemKeys = new Set(newItem.ingredients.map(ingredientKey));
+      const states = data.stateData as ItemState[];
+      const toRestore = states.filter(
+        (s) => s.removed && newItemKeys.has(s.ingredient_key),
+      );
+      if (toRestore.length > 0) {
+        data.stateData = states.map((s) =>
+          newItemKeys.has(s.ingredient_key) && s.removed
+            ? { ...s, removed: false }
+            : s,
+        );
+        await Promise.all(
+          toRestore.map((s) =>
+            fetch("/api/lista-compra/state", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ingredient_key: s.ingredient_key,
+                removed: false,
+              }),
+            }),
+          ),
+        );
+      }
+    }
+    applyListData(data);
     setAddingRecipe(false);
   }
 
@@ -234,9 +275,7 @@ export default function ListaCompraPage() {
       const multiplier = item.servings || 4;
       for (const ing of item.ingredients) {
         const normalizedUnit = normalizeUnit(ing.unit);
-        const mergeKey =
-          ing.catalog_id || `name__${ing.name.toLowerCase().trim()}`;
-        const key = `recipes__${recipeListSignature}__${mergeKey}__${normalizedUnit}`;
+        const key = ingredientKey(ing);
         if (removed.has(key)) continue;
 
         const scaledQty = ing.quantity * multiplier;
@@ -292,7 +331,7 @@ export default function ListaCompraPage() {
     }
 
     return result;
-  }, [items, recipeListSignature, removed, extras, qtyOverrides]);
+  }, [items, removed, extras, qtyOverrides]);
 
   function toggleCheck(key: string) {
     setChecked((prev) => {
@@ -883,6 +922,20 @@ export default function ListaCompraPage() {
 
 function formatQuantity(q: number): string {
   return q % 1 === 0 ? q.toString() : q.toFixed(1);
+}
+
+// Stable per-ingredient key — keys must not include recipe-list identifiers,
+// otherwise removing or adding a recipe invalidates the "removed" state of
+// every other ingredient and previously deleted rows reappear.
+function ingredientKey(ing: {
+  catalog_id: string | null;
+  name: string;
+  unit: string;
+}): string {
+  const normalizedUnit = normalizeUnit(ing.unit);
+  const mergeKey =
+    ing.catalog_id || `name__${ing.name.toLowerCase().trim()}`;
+  return `recipes__${mergeKey}__${normalizedUnit}`;
 }
 
 // Normalize unit strings so that visual variants of the same unit merge into
